@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pages that are Places — a showing by David Russell</title>
+<meta name="description" content="A showing of digital art made through web design — interactive scenes, signal instruments, and generative pieces. By David Russell.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wall:#0b0d13;--ink2:#0e1220;--cream:#ece9e0;--mist:#98a0b8;--cobalt:#6b78ff;--coral:#ff6a3d;--faint:#6f79a0;
+    --serif:"Newsreader",Georgia,"Times New Roman",serif;--mono:"Space Mono",ui-monospace,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(120% 80% at 50% -10%, #121626 0%, #0b0d13 55%, #07080d 100%) fixed;color:var(--cream);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.6}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:900px;margin:0 auto;padding:clamp(48px,8vw,96px) clamp(20px,5vw,40px) 120px}
+  .eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.18em;color:var(--cobalt);text-transform:uppercase;margin:0 0 22px}
+  .eyebrow .dim{color:var(--faint);letter-spacing:.08em}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(46px,8vw,82px);line-height:1.02;letter-spacing:-.02em;margin:0 0 26px;color:#f4f1e8}
+  .statement{font-size:clamp(17px,2.1vw,19px);color:var(--mist);max-width:60ch;margin:0 0 8px}
+  .statement em{font-family:var(--serif);font-style:italic;color:var(--cream)}
+  .rule{height:1px;background:linear-gradient(90deg,rgba(230,235,246,.28),rgba(230,235,246,0));margin:40px 0 56px}
+  .exhibit{margin:0 0 72px}
+  .frame{position:relative;background:var(--ink2);border:1px solid rgba(230,235,246,.14);border-radius:5px;padding:10px;overflow:hidden;transition:border-color .4s ease,transform .4s ease,box-shadow .4s ease}
+  .frame img{display:block;width:100%;border-radius:2px}
+  a.exhibit-link:hover .frame,.exhibit:hover .frame{border-color:rgba(255,106,61,.45);transform:translateY(-3px);box-shadow:0 24px 60px rgba(0,0,0,.45)}
+  .placard{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 14px;margin:20px 2px 0}
+  .no{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--coral);letter-spacing:.06em}
+  .title{font-family:var(--serif);font-weight:500;font-size:clamp(24px,3vw,30px);color:var(--cream);letter-spacing:-.01em}
+  .medium{flex-basis:100%;font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:.04em;margin-top:6px}
+  .desc{flex-basis:100%;font-size:15.5px;color:var(--mist);max-width:62ch;margin-top:10px}
+  .enter{flex-basis:100%;font-family:var(--mono);font-size:13px;color:var(--coral);margin-top:14px;display:inline-block}
+  .enter .arw{display:inline-block;transition:transform .3s ease}
+  .exhibit-link:hover .enter .arw{transform:translateX(6px)}
+  .next{border:1px dashed rgba(230,235,246,.16);border-radius:5px;padding:34px;text-align:center;color:var(--faint);font-family:var(--mono);font-size:13px;letter-spacing:.04em}
+  footer{margin-top:72px;padding-top:26px;border-top:1px solid rgba(230,235,246,.12);font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:.02em}
+  footer a:hover{color:var(--coral)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">A showing &nbsp;<span class="dim">/ digital art through web design</span></p>
+  <h1>Pages that are<br>Places.</h1>
+  <p class="statement">Most of the web is documents — pages that load fast, work everywhere, and get out of the way. That is the right shape for almost everything. But occasionally the right shape is a <em>place</em>: a scene you sit inside for a minute before you read what is there.</p>
+  <p class="statement">This is a room for the few pages that are places. Made by hand, in the browser. No funnel at the bottom.</p>
+  <div class="rule"></div>
+
+  <a class="exhibit exhibit-link" href="deep.html">
+    <div class="frame"><img src="assets/tile-deep.svg" alt="Going Deeper — a scene descending from space into the deep ocean" loading="lazy"></div>
+    <div class="placard">
+      <span class="no">№01</span><span class="title">Going Deeper</span>
+      <span class="medium">2026 · Canvas2D · scroll + interaction</span>
+      <span class="desc">Scroll from orbit, through atmosphere, down past the surface into the abyss. Click the asteroids to shatter them; click the kelp and tadpoles will come. A depth gauge keeps count.</span>
+      <span class="enter">Enter the piece <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="exhibit exhibit-link" href="https://github.com/HeyDavid" target="_blank" rel="noopener">
+    <div class="frame"><img src="assets/radar.svg" alt="Opportunity Radar — an animated sonar scope" loading="lazy"></div>
+    <div class="placard">
+      <span class="no">№02</span><span class="title">Opportunity Radar</span>
+      <span class="medium">2026 · animated SVG · hand-built</span>
+      <span class="desc">A sonar scope whose sweep locks onto a portfolio of live ventures, one at a time — range rings, bearing ticks, a phosphor afterglow. It lives at the top of my GitHub profile.</span>
+      <span class="enter">See it live <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <a class="exhibit exhibit-link" href="https://github.com/HeyDavid" target="_blank" rel="noopener">
+    <div class="frame"><img src="assets/signal.svg" alt="Signal — an animated oscilloscope and tuner" loading="lazy"></div>
+    <div class="placard">
+      <span class="no">№03</span><span class="title">Signal</span>
+      <span class="medium">2026 · animated SVG · hand-built</span>
+      <span class="desc">An oscilloscope and a tuning dial, always transmitting, sweeping across the stations of a working portfolio. A quieter companion piece to the radar.</span>
+      <span class="enter">See it live <span class="arw">→</span></span>
+    </div>
+  </a>
+
+  <div class="next">№04 — a new piece is on the bench.</div>
+
+  <p style="font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:.02em;margin-top:54px;margin-bottom:0">Also built &nbsp;—&nbsp; <a href="https://chatgpt.com/g/g-6a1f6404503881919e029eefcff83f07" style="color:var(--coral)">AI Front Desk Architect</a> (a free GPT + Gemini Gem) &nbsp;·&nbsp; <a href="https://github.com/HeyDavid/animated-profile-radar" style="color:var(--coral)">animated-profile-radar</a> (make your own)</p>
+  <footer>Curated &amp; built by <a href="https://davidrussell.co">David Russell</a> &nbsp;·&nbsp; davidrussell.co &nbsp;·&nbsp; if you got here, you got the thing.</footer>
+</main>
+</body>
+</html>
