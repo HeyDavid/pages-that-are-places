@@ -10,6 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>if(new URLSearchParams(location.search).has("w"))document.documentElement.classList.add("win");</script>
+<style>
+  html.win .chrome,html.win .dock,html.win .hint,html.win .threshold,html.win .ashore{display:none!important}
+</style>
 <style>
   @view-transition { navigation: auto; }
   :root{
@@ -51,7 +55,7 @@
   .threshold .quiet:hover{color:var(--mist)}
 
   .hint{position:fixed;left:50%;bottom:clamp(86px,13vh,120px);transform:translateX(-50%);z-index:6;text-align:center;pointer-events:none;
-    font-size:11.5px;letter-spacing:.08em;color:var(--mist);transition:opacity .8s ease;max-width:44ch;line-height:2}
+    font-size:11.5px;letter-spacing:.08em;color:var(--mist);transition:opacity .8s ease;max-width:64ch;width:max-content;line-height:2}
   body.busy .hint{opacity:0}
 
   .dock{position:fixed;left:50%;bottom:clamp(16px,3.4vh,30px);transform:translateX(-50%);z-index:10;display:flex;gap:9px}
@@ -117,7 +121,7 @@
   <button class="quiet" id="enterQuiet" type="button">enter quietly (no sound)</button>
 </div>
 
-<p class="hint" id="hint">the tide is steady tonight &nbsp;·&nbsp; write a letter, or just stand here a while</p>
+<p class="hint" id="hint">the tide is steady tonight &nbsp;·&nbsp; write a letter, or stand here a while</p>
 
 <div class="dock">
   <button class="pill" id="write" type="button">✉ &nbsp;write a letter</button>
@@ -253,17 +257,28 @@ const Surf = (() => {
     x.restore();
     x.strokeStyle = "rgba(243,236,216,.25)"; x.lineWidth = 1; x.beginPath(); x.arc(mx, my, R, 0, Math.PI * 2); x.stroke(); };
   const drawMoonPath = () => { const { mx } = moonXY(), top = HOR() + 6, bot = SAND();
-    const br = (.5 + .5 * Math.sin(t * .1)) * .05 + .13;                                /* breathing */
-    for (let i = 0; i < 2; i++) { const wob = Math.sin(t * .1 + (i ? Math.PI / 4 : 0));
-      const w0 = (i ? 18 : 34) * (1 + wob * .05), a = i ? .09 : br;
+    const br = (.5 + .5 * Math.sin(t * .1)) * .045 + .1;                                /* breathing */
+    const L = 6;                                                                         /* feathered: wide+faint → narrow+bright */
+    for (let i = L; i >= 1; i--) { const k = i / L, wob = Math.sin(t * .1 + k * Math.PI / 3);
+      const w0 = 12 + 30 * k * (1 + wob * .04), a = br * Math.pow(1 - k + 1 / L, 1.8);
       const g = x.createLinearGradient(0, top, 0, bot);
-      g.addColorStop(0, `rgba(243,236,216,${(a * .9).toFixed(3)})`); g.addColorStop(1, `rgba(243,236,216,${(a * .25).toFixed(3)})`);
+      g.addColorStop(0, `rgba(243,236,216,${(a * .9).toFixed(3)})`); g.addColorStop(1, `rgba(243,236,216,${(a * .22).toFixed(3)})`);
       x.fillStyle = g; x.beginPath();
-      x.moveTo(mx - w0 * .45, top);
-      x.lineTo(mx + w0 * .45, top);
-      x.lineTo(mx + w0 * 2.4 + Math.sin(t * .3 + i) * 6, bot);
-      x.lineTo(mx - w0 * 2.4 + Math.sin(t * .27 + i) * 6, bot);
-      x.closePath(); x.fill(); } };
+      x.moveTo(mx - w0 * .42, top);
+      x.lineTo(mx + w0 * .42, top);
+      x.lineTo(mx + w0 * 2.3 + Math.sin(t * .3 + k) * 5, bot);
+      x.lineTo(mx - w0 * 2.3 + Math.sin(t * .27 + k) * 5, bot);
+      x.closePath(); x.fill(); }
+    /* broken shimmer flecks inside the path — light on moving water */
+    x.save(); x.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 14; i++) { const fy = top + ((i * 37 + (t * 18)) % (bot - top));
+      const prog = (fy - top) / (bot - top), w = 6 + prog * 56;
+      const fx2 = mx + Math.sin(i * 2.7 + t * .9) * w * .8;
+      const fa = .05 + .07 * Math.sin(i * 1.3 + t * 1.7);
+      if (fa <= 0) continue;
+      x.fillStyle = `rgba(243,236,216,${fa.toFixed(3)})`;
+      x.beginPath(); x.ellipse(fx2, fy, 5 + prog * 9, 1.1 + prog * .8, 0, 0, Math.PI * 2); x.fill(); }
+    x.restore(); };
 
   const band = (yBase, amp, speed, freq, fill, stroke) => {
     x.beginPath(); x.moveTo(-20, H);

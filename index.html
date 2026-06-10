@@ -136,7 +136,7 @@
     background:radial-gradient(58% 56% at 50% 47%, var(--haze,rgba(107,120,255,.34)), transparent 70%);
     filter:blur(34px);opacity:.82;transition:opacity .55s ease}
   .frame{position:relative;border-radius:18px;overflow:hidden;background:var(--ink2);
-    transform:perspective(950px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--fs,1));
+    transform:perspective(950px) rotateX(var(--rx,0deg)) rotateY(calc(var(--ry,0deg) + var(--cy,0deg))) scale(var(--fs,1));
     box-shadow:0 0 0 1px rgba(205,214,245,.16), 0 0 42px var(--rim,rgba(91,141,239,.24)), 0 30px 80px rgba(0,0,0,.55);
     transition:transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .5s ease, filter .4s ease}
   .frame::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
@@ -158,6 +158,18 @@
   .glint{position:absolute;z-index:3;pointer-events:none;color:#dfe6ff;opacity:0;font-size:10px;line-height:1;
     text-shadow:0 0 8px rgba(184,200,255,.9);animation:glint var(--gdur,5s) ease-in-out infinite;animation-delay:var(--gdelay,0s)}
   @keyframes glint{0%,100%{opacity:0;transform:scale(.4) rotate(0deg)}50%{opacity:.9;transform:scale(1.1) rotate(45deg)}}
+  /* corridor: frames hang alternately, angled toward the walker, lit from above, reflected in the floor */
+  .exhibit:nth-of-type(odd){margin-left:0;margin-right:auto}
+  .exhibit:nth-of-type(even){margin-left:auto;margin-right:0}
+  .exhibit:nth-of-type(odd) .frame{--cy:2.4deg}
+  .exhibit:nth-of-type(even) .frame{--cy:-2.4deg}
+  @media (min-width:720px){
+    .frame{-webkit-box-reflect:below 12px linear-gradient(transparent 76%,rgba(255,255,255,.085))}
+  }
+  .lamp{position:absolute;left:50%;top:-26%;transform:translateX(-50%);z-index:3;pointer-events:none;width:78%;height:48%;
+    background:radial-gradient(52% 62% at 50% 0%,rgba(255,222,170,.13),rgba(255,222,170,.04) 55%,transparent 75%);
+    mix-blend-mode:screen}
+  .exhibit:hover .lamp{background:radial-gradient(52% 62% at 50% 0%,rgba(255,222,170,.2),rgba(255,222,170,.06) 55%,transparent 75%)}
   .exhibit.warping{z-index:60;position:relative}
   .exhibit.warping .frame{--fs:2.3;filter:brightness(1.45) saturate(1.15);transition:transform .62s cubic-bezier(.3,.6,.2,1),filter .5s ease}
   .exhibit.warping .portal::before{opacity:1;filter:blur(30px)}
@@ -176,7 +188,7 @@
   .enter .arw{display:inline-block;transition:transform .3s ease}
   .exhibit:hover .enter .arw{transform:translateX(6px)}
   /* the three unopened rooms */
-  .doors{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:clamp(80px,14vh,160px)}
+  .doors{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:clamp(80px,14vh,160px)}
   .door{display:flex;flex-direction:column;gap:9px;border:1px dashed rgba(230,235,246,.16);border-radius:12px;padding:24px 20px;
     font-family:var(--mono);transition:border-color .4s,background .4s}
   .door:hover{border-color:rgba(107,120,255,.35);background:rgba(107,120,255,.03)}
@@ -307,7 +319,7 @@
 
 <main class="wrap">
   <section class="hero">
-    <p class="eyebrow">A showing &nbsp;<span class="dim">/ digital art through web design</span></p>
+    <p class="eyebrow">A small museum &nbsp;<span class="dim">/ one long night · digital art through web design</span></p>
     <h1>Pages that are Places.</h1>
     <p class="statement">Most of the web is documents — pages that load fast, work everywhere, and get out of the way. That is the right shape for almost everything. But occasionally the right shape is a <em>place</em>: a scene you sit inside for a minute before you read what is there.</p>
     <p class="statement">This is a small museum of one long night — seven rooms, seven hours, each one a page that is a place. You arrive by falling. The sky celebrates. A fire reads you. The sea delivers. Your wandering becomes a country, a flower opens briefly, and before you leave, you look up.</p>
@@ -396,7 +408,7 @@ const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---- scene settings (persisted, event-driven) ---- */
 const Scene = (() => {
-  let s = { sparks:true, meteors:true, grain:false };
+  let s = { sparks:true, meteors:true, grain:true };
   try { Object.assign(s, JSON.parse(localStorage.getItem("ptp-scene")||"{}")); } catch(e){}
   const save = () => { try { localStorage.setItem("ptp-scene", JSON.stringify(s)); } catch(e){} };
   return {
@@ -906,6 +918,8 @@ const SolarWind = (() => {
       orbit.style.setProperty("--oang",(i*127)+"deg");
       const moon=document.createElement("span"); moon.className="moon"; orbit.appendChild(moon);
       portal.appendChild(orbit);
+      const lamp=document.createElement("span"); lamp.className="lamp"; lamp.setAttribute("aria-hidden","true");
+      portal.appendChild(lamp);
       for(let g=0;g<3;g++){ const gl=document.createElement("span"); gl.className="glint"; gl.textContent="✦"; gl.setAttribute("aria-hidden","true");
         gl.style.left=(6+Math.random()*88)+"%";
         gl.style.top=(Math.random()<.5?(-7-Math.random()*7):(98+Math.random()*8))+"%";
@@ -920,17 +934,17 @@ const SolarWind = (() => {
         portal.style.setProperty("--rx",(-ny*6).toFixed(2)+"deg"); },{passive:true});
       ex.addEventListener("pointerleave",()=>{ portal.style.setProperty("--ry","0deg"); portal.style.setProperty("--rx","0deg"); });
     }
-    /* the window plays the actual world on hover (local pieces, fine pointers only) */
+    /* the windows are alive — each local room runs inside its frame (window mode strips the room's UI) */
     const href0=ex.getAttribute("href")||"";
-    if(fine&&!reduce&&!/^https?:/.test(href0)){
-      const frame=ex.querySelector(".frame"); let ifr=null, killT=0;
-      ex.addEventListener("pointerenter",()=>{ clearTimeout(killT);
-        if(!ifr){ ifr=document.createElement("iframe"); ifr.className="preview"; ifr.src=href0;
-          ifr.setAttribute("aria-hidden","true"); ifr.setAttribute("tabindex","-1"); ifr.setAttribute("scrolling","no");
-          ifr.title=""; frame.appendChild(ifr); }
-        ex.classList.add("peek"); });
-      ex.addEventListener("pointerleave",()=>{ ex.classList.remove("peek");
-        killT=setTimeout(()=>{ if(ifr){ ifr.remove(); ifr=null; } },4000); });
+    if(fine&&!reduce&&!/^https?:/.test(href0)&&matchMedia("(min-width:760px)").matches){
+      const frame=ex.querySelector(".frame");
+      const load=()=>{ if(frame.querySelector(".preview")) return;
+        const ifr=document.createElement("iframe"); ifr.className="preview";
+        ifr.src=href0+(href0.includes("?")?"&":"?")+"w=1";
+        ifr.setAttribute("aria-hidden","true"); ifr.setAttribute("tabindex","-1"); ifr.setAttribute("scrolling","no"); ifr.title="";
+        ifr.addEventListener("load",()=>ex.classList.add("peek"));
+        frame.appendChild(ifr); };
+      if("requestIdleCallback" in window) requestIdleCallback(load,{timeout:2200+i*900}); else setTimeout(load,800+i*700);
     }
     ex.addEventListener("click",(e)=>{
       if(reduce||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button!==0) return;

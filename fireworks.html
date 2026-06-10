@@ -10,6 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>if(new URLSearchParams(location.search).has("w"))document.documentElement.classList.add("win");</script>
+<style>
+  html.win .chrome,html.win .dock,html.win .hint,html.win .threshold,html.win .ashore,html.win .hud{display:none!important}
+</style>
 <style>
   @view-transition { navigation: auto; }
   :root{
@@ -543,6 +547,14 @@ const FX = (() => {
       if (!FX.isOn()) setSnd(await FX.toggle());
       ov.remove(); document.body.classList.add("lit"); playShow(items); });
   })();
+
+  /* window mode — the museum index views this room through the glass; keep the sky gently alive */
+  if (document.documentElement.classList.contains("win")) {
+    document.body.classList.add("lit");
+    setInterval(() => { if (rockets.length < 2 && !showQ.length && sparks.length < 220) {
+      const tn = TYPELIST[(Math.random() * TYPELIST.length) | 0];
+      fire(showPath(.2 + Math.random() * .6, .16 + Math.random() * .28), tn); } }, 4600);
+  }
 })();
 </script>
 </body>
