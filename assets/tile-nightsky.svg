@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="440" viewBox="0 0 1280 440" role="img" aria-label="That Night's Sky — a named constellation and a crescent moon over a faint horizon">
+<defs><linearGradient id="nsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#030409"/><stop offset=".8" stop-color="#05070f"/><stop offset="1" stop-color="#0a0f1e"/></linearGradient></defs>
+<rect width="1280" height="440" fill="url(#nsky)"/>
+<g fill="#e9edf6"><circle cx="120" cy="70" r="1.2" opacity=".5"/><circle cx="260" cy="140" r=".9" opacity=".4"/><circle cx="420" cy="60" r="1.1" opacity=".55"/><circle cx="180" cy="240" r=".8" opacity=".35"/><circle cx="340" cy="310" r="1" opacity=".4"/><circle cx="1140" cy="270" r="1" opacity=".45"/><circle cx="1230" cy="120" r="1.2" opacity=".5"/><circle cx="980" cy="330" r=".9" opacity=".35"/><circle cx="80" cy="370" r="1" opacity=".3"/><circle cx="520" cy="350" r=".9" opacity=".35"/></g>
+<circle cx="1020" cy="100" r="64" fill="#f3ecd8" opacity=".06"/>
+<circle cx="1020" cy="100" r="34" fill="#131828"/>
+<path d="M 1020 66 a 34 34 0 0 0 0 68 a 22 34 0 0 0 0 -68 Z" fill="#f3ecd8"/>
+<circle cx="1020" cy="100" r="34" fill="none" stroke="#f3ecd8" stroke-opacity=".25"/>
+<g>
+<polyline points="480,140 560,180 640,150 700,220 780,200 820,260" fill="none" stroke="#c8d2ff" stroke-opacity=".25" stroke-width="1.2"/>
+<circle cx="480" cy="140" r="4.5" fill="#e6eeff"/><circle cx="480" cy="140" r="12" fill="#c8d7ff" opacity=".2"/>
+<circle cx="560" cy="180" r="2" fill="#c8d2ff" opacity=".75"/>
+<circle cx="640" cy="150" r="2.4" fill="#c8d2ff" opacity=".8"/>
+<circle cx="700" cy="220" r="4" fill="#e6eeff"/><circle cx="700" cy="220" r="11" fill="#c8d7ff" opacity=".18"/>
+<circle cx="780" cy="200" r="1.8" fill="#c8d2ff" opacity=".7"/>
+<circle cx="820" cy="260" r="2.2" fill="#c8d2ff" opacity=".75"/>
+</g>
+<path d="M 560 312 A 130 14 0 0 0 800 312" fill="none" stroke="#c8d2ff" stroke-opacity=".3"/>
+<text x="650" y="306" font-family="Space Mono, monospace" font-size="15" fill="#aab6e0" text-anchor="middle" letter-spacing="4">THE NIGHT WE MET</text>
+<text x="92" y="404" font-family="Space Mono, monospace" font-size="15" fill="#6070a0" letter-spacing="2">type a date · the room hangs its sky</text>
+</svg>

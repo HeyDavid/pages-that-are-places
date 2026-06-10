@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Cartographer — a country drawn by your wandering · Pages that are Places</title>
+<meta name="description" content="A blank vellum and an honest premise: where you wander becomes a country. terrain develops wherever your pointer travels — contour lines, coastlines, cross-hatched depths — until you name it and press the map.">
+<meta name="theme-color" content="#0d1014">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>if(new URLSearchParams(location.search).has("w"))document.documentElement.classList.add("win");</script>
+<style>
+  html.win .chrome,html.win .threshold,html.win .namepanel{display:none!important}
+</style>
+<style>
+  @view-transition { navigation: auto; }
+  :root{
+    --room:#0d1014;--vellum:#1a1d22;--ink-light:rgba(210,215,225,.5);--ink-coast:rgba(185,200,230,.82);
+    --cream:#e8ecf2;--mist:#8a95a8;--faint:#505a6a;--accent:#9ab4d8;--gold:#c8d8f0;
+    --serif:"Newsreader",Georgia,serif;--mono:"Space Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;overscroll-behavior:none}
+  body{background:var(--room);color:var(--cream);font-family:var(--mono);-webkit-font-smoothing:antialiased;touch-action:none}
+  canvas{position:fixed;inset:0;width:100vw;height:100vh}
+  #cv-hatch{z-index:0;pointer-events:none}
+  #cv-contour{z-index:1;pointer-events:none}
+  #cv-main{z-index:2}
+  ::selection{background:rgba(154,180,216,.3)}
+
+  .chrome{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
+    gap:12px;padding:14px clamp(16px,4vw,30px);pointer-events:none}
+  .chrome>*{pointer-events:auto}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--mist);text-decoration:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;transition:color .3s}
+  .brand:hover{color:var(--cream)}
+  .brand .arw{color:var(--accent)}
+  .tools{display:flex;gap:10px;align-items:center}
+  .hud{display:flex;gap:14px;padding:8px 13px;background:rgba(13,16,20,.6);border:1px solid rgba(232,236,242,.08);
+    border-radius:11px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);font-size:11px;color:var(--mist)}
+  .hud .lbl{color:var(--faint)}
+  .hud .val{color:var(--gold);font-variant-numeric:tabular-nums;margin-left:6px}
+  .pill{display:inline-flex;align-items:center;height:36px;padding:0 14px;cursor:pointer;
+    background:rgba(13,16,20,.6);border:1px solid rgba(232,236,242,.09);border-radius:11px;color:var(--mist);
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    transition:color .3s,border-color .3s}
+  .pill:hover{color:var(--cream);border-color:rgba(154,180,216,.4)}
+  .pill[aria-pressed="true"]{color:var(--accent);border-color:rgba(154,180,216,.5)}
+
+  .threshold{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    background:var(--room);text-align:center;padding:24px;transition:opacity 1.1s ease}
+  .threshold.gone{opacity:0;pointer-events:none}
+  .threshold .hr{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--faint)}
+  .threshold h1{font-family:var(--serif);font-weight:400;font-size:clamp(40px,7vw,72px);letter-spacing:-.02em;margin:0;color:#d8e2f0;view-transition-name:piece-05}
+  .threshold p{margin:0;font-size:12px;color:var(--mist);letter-spacing:.06em;max-width:44ch;line-height:1.9}
+  .threshold .go{margin-top:14px;padding:14px 32px;font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+    color:#0d1014;background:var(--gold);border:none;border-radius:12px;box-shadow:0 0 36px rgba(200,216,240,.2);transition:transform .25s,box-shadow .3s}
+  .threshold .go:hover{transform:translateY(-2px);box-shadow:0 0 48px rgba(200,216,240,.35)}
+  .threshold .quiet{background:none;border:none;cursor:pointer;color:var(--faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-decoration:underline;text-underline-offset:4px}
+  .threshold .quiet:hover{color:var(--mist)}
+
+  .namepanel{position:fixed;left:0;right:0;bottom:0;z-index:30;
+    padding:clamp(18px,3vh,28px) clamp(18px,5vw,40px) clamp(22px,4vh,36px);
+    background:linear-gradient(to top, rgba(13,16,20,.97) 70%, rgba(13,16,20,0));
+    display:flex;flex-direction:column;gap:14px;
+    transform:translateY(110%);transition:transform .6s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+  .namepanel.open{transform:translateY(0);pointer-events:auto}
+  .namepanel .nplbl{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--faint);margin:0}
+  .namepanel .nprow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .namepanel input{flex:1 1 180px;min-width:0;background:rgba(232,236,242,.06);border:1px solid rgba(232,236,242,.12);border-radius:10px;
+    color:var(--cream);font-family:var(--serif);font-style:italic;font-size:17px;padding:10px 14px;outline:none;max-width:320px}
+  .namepanel input:focus{border-color:rgba(154,180,216,.45)}
+  .btn{padding:11px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:10px;
+    border:1px solid rgba(232,236,242,.14);background:rgba(232,236,242,.05);color:var(--mist);transition:color .25s,border-color .3s,background .3s;white-space:nowrap}
+  .btn:hover{color:var(--cream);border-color:rgba(154,180,216,.5)}
+  .btn.primary{background:var(--gold);color:#0d1014;border-color:transparent}
+  .btn.primary:hover{background:#ddeeff;color:#0d1014}
+
+  #toast{position:fixed;left:50%;bottom:66px;transform:translateX(-50%) translateY(8px);z-index:60;padding:10px 16px;
+    background:rgba(13,16,20,.94);border:1px solid rgba(154,180,216,.4);border-radius:11px;font-size:11.5px;color:var(--gold);
+    letter-spacing:.03em;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:86vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+<canvas id="cv-hatch" aria-hidden="true"></canvas>
+<canvas id="cv-contour" aria-hidden="true"></canvas>
+<canvas id="cv-main" aria-label="A vellum map that develops wherever your pointer travels."></canvas>
+
+<div class="chrome">
+  <a class="brand" href="index.html"><span class="arw">←</span><span class="txt">the rooms</span></a>
+  <div class="tools">
+    <div class="hud" aria-live="polite">
+      <span><span class="lbl">explored</span><span class="val" id="hud-pct">0%</span></span>
+    </div>
+    <button class="pill" id="sound" type="button" aria-pressed="false">pencil off</button>
+  </div>
+</div>
+
+<div class="threshold" id="threshold">
+  <div class="hr">№05 · the fifth hour</div>
+  <h1>The Cartographer.</h1>
+  <p>a blank vellum and an honest premise: where you wander becomes a country. draw it by moving.</p>
+  <button class="go" id="enter" type="button">pick up the pencil</button>
+  <button class="quiet" id="enterQuiet" type="button">enter quietly (no sound)</button>
+</div>
+
+<div class="namepanel" id="namepanel" role="dialog" aria-label="Name your country" aria-modal="false">
+  <p class="nplbl">name your country</p>
+  <div class="nprow">
+    <input id="countryname" type="text" maxlength="24" placeholder="e.g. New Meridian…" aria-label="Country name">
+    <button class="btn primary" id="btnkeep" type="button">press the map</button>
+    <button class="btn" id="btnlink" type="button">carry the map out (a link)</button>
+    <a class="btn" href="index.html">back to museum</a>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   THE CARTOGRAPHER — №05 of Pages that are Places. The fifth hour.
+   A blank vellum develops terrain wherever your pointer wanders:
+   fBm value-noise rendered as hand-inked contour polylines with
+   jitter, coastline emphasis, cross-hatched depths. Explored mask
+   grows along the trail. Name your country; carry it in a link.
+   Seed encodes in the URL — shared links re-draw the same terrain.
+   Canvas2D only, WebAudio paper hiss + pencil scratch. No deps.
+   ============================================================ */
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const WIN = document.documentElement.classList.contains("win");
+
+/* ---- b64url helpers ---- */
+const b64u = u8 => btoa(String.fromCharCode(...u8)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const unb64u = s => { s=s.replace(/-/g,"+").replace(/_/g,"/"); const b=atob(s); const u=new Uint8Array(b.length); for(let i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; };
+
+/* ---- codec: #c1<b64u: [1, saltHi, saltLo, ...nameUTF8]> ---- */
+const readHash = () => {
+  const h = location.hash;
+  if (!h || !h.startsWith("#c1")) return null;
+  try {
+    const u = unb64u(h.slice(3));
+    if (u.length < 3 || u[0] !== 1) return null;
+    const salt = (u[1] << 8) | u[2];
+    const name = u.length > 3 ? new TextDecoder().decode(u.slice(3)) : "";
+    return { salt, name };
+  } catch(e) { return null; }
+};
+const incoming = readHash();
+
+/* ---- LCG random from seed ---- */
+const makeLCG = (seed) => {
+  let s = (seed >>> 0) || 1;
+  return () => { s = Math.imul(s, 1664525) + 1013904223 >>> 0; return s / 4294967296; };
+};
+
+/* ---- 4-octave value noise (seeded) ---- */
+const makeNoise = (salt) => {
+  const day = Math.floor(Date.now() / 86400000);
+  const seed = (day * 65537 + salt) & 0x7FFFFFFF;
+  const rng = makeLCG(seed);
+  const SZ = 256;
+  const table = new Float32Array(SZ * SZ);
+  for (let i = 0; i < table.length; i++) table[i] = rng();
+  const lerp = (a,b,t) => a + (b-a)*t;
+  const smooth = t => t*t*(3-2*t);
+  const sampleGrid = (xi,yi,fx,fy) => {
+    const x0=(xi&(SZ-1)), x1=(x0+1)&(SZ-1), y0=(yi&(SZ-1)), y1=(y0+1)&(SZ-1);
+    return lerp(lerp(table[y0*SZ+x0],table[y0*SZ+x1],smooth(fx)),
+                lerp(table[y1*SZ+x0],table[y1*SZ+x1],smooth(fx)),smooth(fy));
+  };
+  return (px, py, baseFreq) => {
+    let v=0, amp=1, freq=baseFreq, max=0;
+    for (let oct=0; oct<4; oct++) {
+      const wx=px*freq, wy=py*freq;
+      const xi=Math.floor(wx)&(SZ-1), yi=Math.floor(wy)&(SZ-1);
+      v += sampleGrid(xi,yi,wx-Math.floor(wx),wy-Math.floor(wy)) * amp;
+      max += amp; amp *= .5; freq *= 2;
+    }
+    return v/max;
+  };
+};
+
+/* ---- jitter noise (hand-ink wobble) ---- */
+const makeJitter = (salt) => {
+  const rng = makeLCG(((salt ^ 0xDEAD) + 31337) >>> 0);
+  const SZ = 128;
+  const table = new Float32Array(SZ * SZ);
+  for (let i = 0; i < table.length; i++) table[i] = rng() * 2 - 1;
+  const lerp = (a,b,t) => a + (b-a)*t;
+  const smooth = t => t*t*(3-2*t);
+  return (px, py, freq) => {
+    const wx=px*freq, wy=py*freq;
+    const xi=Math.floor(wx)&(SZ-1), x1=(xi+1)&(SZ-1), yi=Math.floor(wy)&(SZ-1), y1=(yi+1)&(SZ-1);
+    const fx=wx-Math.floor(wx), fy=wy-Math.floor(wy);
+    return lerp(lerp(table[yi*SZ+xi],table[yi*SZ+x1],smooth(fx)),
+                lerp(table[y1*SZ+xi],table[y1*SZ+x1],smooth(fx)),smooth(fy));
+  };
+};
+
+/* ---- sound: paper hiss + pencil scratch ---- */
+const Pencil = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx, master, hissGain, on=false, built=false, scratchT=0;
+  const build = () => {
+    if (built) return; built=true;
+    ctx = new AC(); master = ctx.createGain(); master.gain.value=0;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value=-18; comp.ratio.value=4;
+    master.connect(comp); comp.connect(ctx.destination);
+    const hissLen = 2 * ctx.sampleRate;
+    const hissBuf = ctx.createBuffer(1, hissLen, ctx.sampleRate);
+    const hissD = hissBuf.getChannelData(0);
+    for (let i=0;i<hissLen;i++) hissD[i] = Math.random()*2-1;
+    const hissSrc = ctx.createBufferSource(); hissSrc.buffer=hissBuf; hissSrc.loop=true;
+    const hissHP = ctx.createBiquadFilter(); hissHP.type="highpass"; hissHP.frequency.value=3500;
+    hissGain = ctx.createGain(); hissGain.gain.value=.03;
+    hissSrc.connect(hissHP); hissHP.connect(hissGain); hissGain.connect(master);
+    hissSrc.start();
+  };
+  const scratch = () => {
+    if (!on || !built) return;
+    const now = ctx.currentTime;
+    if (now < scratchT) return; scratchT = now + .08;
+    const dur = .02 + Math.random()*.04;
+    const buf = ctx.createBuffer(1, (ctx.sampleRate*dur)|0, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+    const src = ctx.createBufferSource(); src.buffer=buf;
+    const bp = ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=4000+Math.random()*2000; bp.Q.value=2;
+    const g = ctx.createGain(); g.gain.setValueAtTime(.12, now); g.gain.exponentialRampToValueAtTime(.001, now+dur+.04);
+    src.connect(bp); bp.connect(g); g.connect(master);
+    src.start(now);
+  };
+  const setOn = async (v) => {
+    if (v && !built) build();
+    if (built && ctx.state==="suspended") await ctx.resume();
+    on=v; if (built) master.gain.setTargetAtTime(v?.14:.0001, ctx.currentTime, .8);
+    return on;
+  };
+  return { setOn, isOn:()=>on, scratch };
+})();
+
+/* ============================================================ */
+(() => {
+  const cvH = document.getElementById("cv-hatch");
+  const cvC = document.getElementById("cv-contour");
+  const cvM = document.getElementById("cv-main");
+  const xH = cvH.getContext("2d");
+  const xC = cvC.getContext("2d");
+  const xM = cvM.getContext("2d");
+
+  let W=0, H=0, dpr=1;
+
+  const CELL = 14;
+  let COLS=0, ROWS=0;
+  const BASEFREQ = .003;
+  const COAST_T = .42;
+  const THRESHOLDS = [];
+  for (let t=.08; t<=.96; t+=.08) THRESHOLDS.push(parseFloat(t.toFixed(3)));
+
+  const day = Math.floor(Date.now()/86400000);
+  let salt = incoming ? incoming.salt : (Math.random()*65535)|0;
+  let noise = makeNoise(salt);
+  let jitter = makeJitter(salt);
+
+  let hmap = null;
+  const buildHmap = () => {
+    hmap = new Float32Array(COLS*ROWS);
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+      hmap[r*COLS+c] = noise(c*CELL + CELL/2, r*CELL + CELL/2, BASEFREQ);
+    }
+  };
+
+  let maskData = null;
+  const MASK_R = 70;
+  const buildMask = () => { maskData = new Uint8Array(COLS*ROWS); };
+
+  const stampMask = (px, py) => {
+    const cellX = px/CELL, cellY = py/CELL;
+    const rCells = MASK_R/CELL;
+    const x0 = Math.max(0, Math.floor(cellX - rCells));
+    const x1 = Math.min(COLS-1, Math.ceil(cellX + rCells));
+    const y0 = Math.max(0, Math.floor(cellY - rCells));
+    const y1 = Math.min(ROWS-1, Math.ceil(cellY + rCells));
+    const newCells = [];
+    for (let r=y0;r<=y1;r++) for (let c=x0;c<=x1;c++) {
+      const dx=(c+.5)-cellX, dy=(r+.5)-cellY;
+      if (dx*dx+dy*dy <= rCells*rCells) {
+        const idx=r*COLS+c;
+        if (!maskData[idx]) { maskData[idx]=1; newCells.push([r,c]); }
+      }
+    }
+    return newCells;
+  };
+
+  /* segments buffer (young, ink-wet); aged segments bake onto cvH and leave the buffer */
+  const segBuf = [];
+  const tNow = () => performance.now();
+
+  const renderCell = (r,c) => {
+    const h00 = hmap[r*COLS+c];
+    if (h00 === undefined) return;
+    const hR = c+1<COLS ? hmap[r*COLS+c+1] : h00;
+    const hD = r+1<ROWS ? hmap[(r+1)*COLS+c] : h00;
+    const hDR = (r+1<ROWS && c+1<COLS) ? hmap[(r+1)*COLS+c+1] : h00;
+
+    const jFreq = .015;
+    const px = c*CELL, py = r*CELL;
+    const ts = tNow();
+
+    for (const thr of THRESHOLDS) {
+      const isCoast = Math.abs(thr - COAST_T) < .001;
+      const edges = [
+        [h00,hR, px,py, px+CELL,py],
+        [h00,hD, px,py, px,py+CELL],
+        [hD,hDR, px,py+CELL, px+CELL,py+CELL],
+        [hR,hDR, px+CELL,py, px+CELL,py+CELL]
+      ];
+      for (const [ha,hb,ax,ay,bx,by] of edges) {
+        if ((ha<thr) !== (hb<thr)) {
+          const t = (thr-ha)/(hb-ha);
+          const mx = ax+(bx-ax)*t, my = ay+(by-ay)*t;
+          const jx = jitter(mx,my,jFreq)*1.5;
+          const jy = jitter(mx+100,my+100,jFreq)*1.5;
+          const dx=bx-ax, dy=by-ay, len=Math.sqrt(dx*dx+dy*dy)||1;
+          const nx=dy/len, ny=-dx/len;
+          const segLen = isCoast ? 4 : 3;
+          segBuf.push({
+            x0:mx+jx-nx*segLen, y0:my+jy-ny*segLen,
+            x1:mx+jx+nx*segLen, y1:my+jy+ny*segLen,
+            isCoast, ts
+          });
+        }
+      }
+    }
+  };
+
+  const drawHatch = (r,c) => {
+    const h = hmap[r*COLS+c];
+    if (h >= COAST_T) return;
+    const px = c*CELL, py = r*CELL;
+    const density = 1 - h/COAST_T;
+    xH.save();
+    xH.beginPath(); xH.rect(px,py,CELL,CELL); xH.clip();
+    const spacing = Math.max(4, 10 - density*6);
+    xH.strokeStyle = `rgba(175,185,210,${(.12+density*.1).toFixed(3)})`;
+    xH.lineWidth=.6;
+    for (let s=-CELL*2;s<CELL*2;s+=spacing) {
+      xH.beginPath(); xH.moveTo(px+s,py); xH.lineTo(px+s+CELL*2,py+CELL*2); xH.stroke();
+      xH.beginPath(); xH.moveTo(px+s+CELL*2,py); xH.lineTo(px+s,py+CELL*2); xH.stroke();
+    }
+    xH.restore();
+  };
+
+  let lastPct = 0;
+  const estimateCoverage = () => {
+    let count=0, total=0;
+    const step = Math.max(1, (COLS*ROWS/2000)|0);
+    for (let i=0;i<maskData.length;i+=step) { if (maskData[i]) count++; total++; }
+    return total>0 ? (count/total)*100 : 0;
+  };
+
+  const paintVellum = () => {
+    xM.clearRect(0,0,W,H);
+    xM.fillStyle = "#0d1014"; xM.fillRect(0,0,W,H);
+    const vx=W*.08, vy=H*.06, vw=W*.84, vh=H*.88;
+    const vg = xM.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(vw,vh)*.6);
+    vg.addColorStop(0,"#1e2228"); vg.addColorStop(.6,"#181b20"); vg.addColorStop(1,"#141720");
+    xM.fillStyle=vg; xM.beginPath(); xM.roundRect(vx,vy,vw,vh,6); xM.fill();
+    xM.strokeStyle="rgba(210,215,225,.06)"; xM.lineWidth=1; xM.beginPath(); xM.roundRect(vx,vy,vw,vh,6); xM.stroke();
+  };
+
+  /* ink-wet pass: young segs on cvC; aged segs baked onto cvH then dropped (keeps frame cost flat) */
+  const drawRevealedContours = (now) => {
+    xC.clearRect(0,0,W,H);
+    const bakeAge = reduce ? 0 : 1600;
+    for (let i = segBuf.length - 1; i >= 0; i--) {
+      const seg = segBuf[i];
+      const age = now - seg.ts;
+      if (age >= bakeAge) {
+        xH.strokeStyle = seg.isCoast ? "rgba(185,200,230,.82)" : "rgba(210,215,225,.72)";
+        xH.lineWidth = seg.isCoast ? 1.6 : .9;
+        xH.beginPath(); xH.moveTo(seg.x0,seg.y0); xH.lineTo(seg.x1,seg.y1); xH.stroke();
+        segBuf.splice(i,1); continue;
+      }
+      const progress = Math.min(1, age/1500);
+      const alpha = .2 + progress*.55;
+      xC.strokeStyle = seg.isCoast
+        ? `rgba(185,200,230,${(alpha*1.3).toFixed(3)})`
+        : `rgba(210,215,225,${alpha.toFixed(3)})`;
+      xC.lineWidth = seg.isCoast ? 1.6 : .9;
+      xC.beginPath(); xC.moveTo(seg.x0,seg.y0); xC.lineTo(seg.x1,seg.y1); xC.stroke();
+    }
+  };
+
+  let trailPts = [];
+  let lastStampX=-9999, lastStampY=-9999;
+  let lastPX=-1,lastPY=-1, lastVelCheck=0;
+  let started=false, enterTime=0;
+  let panelShown=false;
+
+  const onPointerMove = (px,py) => {
+    if (!started) return;
+    const STAMP_DIST = 14;
+    if (Math.hypot(px-lastStampX,py-lastStampY) < STAMP_DIST && lastStampX!==-9999) return;
+    lastStampX=px; lastStampY=py;
+    const newCells = stampMask(px,py);
+    for (const [r,c] of newCells) { renderCell(r,c); drawHatch(r,c); }
+    const now = performance.now();
+    if (now - lastVelCheck > 80) {
+      if (lastPX>=0) {
+        const vel = Math.hypot(px-lastPX,py-lastPY);
+        if (vel>8) Pencil.scratch();
+      }
+      lastPX=px; lastPY=py; lastVelCheck=now;
+    }
+    trailPts.push([px,py]);
+    if (trailPts.length>2000) trailPts.shift();
+  };
+
+  /* WIN mode: lissajous auto-wanderer */
+  let winT=0;
+  const winStep = () => {
+    if (!started) return;
+    winT += reduce ? .5 : .008;
+    const wx = W*.1 + W*.8*(.5+.5*Math.sin(winT*2.1));
+    const wy = H*.1 + H*.8*(.5+.5*Math.sin(winT*3.2+1));
+    onPointerMove(wx,wy);
+  };
+
+  cvM.addEventListener("pointermove", e => { e.preventDefault(); onPointerMove(e.clientX,e.clientY); }, {passive:false});
+  cvM.addEventListener("touchmove", e => { e.preventDefault(); const t=e.touches[0]; onPointerMove(t.clientX,t.clientY); }, {passive:false});
+
+  const checkPanel = (now) => {
+    if (panelShown) return;
+    const elapsed = (now - enterTime)/1000;
+    if (elapsed >= 75 || lastPct >= 30) {
+      panelShown=true;
+      document.getElementById("namepanel").classList.add("open");
+    }
+  };
+
+  const frame = (now) => {
+    requestAnimationFrame(frame);
+    paintVellum();
+    drawRevealedContours(now);
+    xM.drawImage(cvH,0,0,W,H);
+    xM.drawImage(cvC,0,0,W,H);
+    if ((now|0)%900 < 20) {
+      lastPct = estimateCoverage();
+      const hudEl = document.getElementById("hud-pct");
+      if (hudEl) hudEl.textContent = Math.round(lastPct)+"%";
+    }
+    if (WIN) winStep();
+    if (started && !WIN) checkPanel(now);
+  };
+
+  const resize = () => {
+    dpr = Math.min(devicePixelRatio||1, 2);
+    W = innerWidth; H = innerHeight;
+    [cvH,cvC,cvM].forEach(cv => { cv.width=W*dpr; cv.height=H*dpr; });
+    xH.setTransform(dpr,0,0,dpr,0,0);
+    xC.setTransform(dpr,0,0,dpr,0,0);
+    xM.setTransform(dpr,0,0,dpr,0,0);
+    COLS = Math.ceil(W/CELL)+1;
+    ROWS = Math.ceil(H/CELL)+1;
+    buildHmap();
+    buildMask();
+    segBuf.length=0;
+    trailPts=[];
+    lastStampX=-9999; lastStampY=-9999;
+    revealAllDone=false;
+    if (incoming) revealAll();
+  };
+
+  let revealAllDone=false;
+  const revealAll = () => {
+    if (revealAllDone) return; revealAllDone=true;
+    const batches=[]; const batchSize=60;
+    for (let i=0;i<ROWS;i++) for (let j=0;j<COLS;j++) batches.push([j*CELL+CELL/2, i*CELL+CELL/2]);
+    const rng2 = makeLCG(salt^0xABCD);
+    for (let i=batches.length-1;i>0;i--) {
+      const j=(rng2()*i)|0;
+      [batches[i],batches[j]]=[batches[j],batches[i]];
+    }
+    let idx=0;
+    const drawBatch = () => {
+      if (idx>=batches.length) return;
+      const end=Math.min(idx+batchSize,batches.length);
+      while (idx<end) {
+        const [px,py]=batches[idx++];
+        const cellX=(px/CELL)|0, cellY=(py/CELL)|0;
+        const iCell=cellY*COLS+cellX;
+        if (iCell>=0 && iCell<maskData.length && !maskData[iCell]) {
+          maskData[iCell]=1;
+          renderCell(cellY,cellX);
+          drawHatch(cellY,cellX);
+        }
+      }
+      if (idx<batches.length) { if (!reduce) setTimeout(drawBatch, 20); else drawBatch(); }
+    };
+    if (reduce) drawBatch();
+    else setTimeout(drawBatch,600);
+    panelShown=true;
+    setTimeout(()=>{ document.getElementById("namepanel").classList.add("open");
+      if (incoming.name) document.getElementById("countryname").value=incoming.name; },
+      reduce?200:2800);
+  };
+
+  const toast = (m) => {
+    const el=document.getElementById("toast");
+    el.textContent=m; el.classList.add("show");
+    clearTimeout(toast._h); toast._h=setTimeout(()=>el.classList.remove("show"),3200);
+  };
+
+  const makeKeepsake = (name) => {
+    const PW=1400,PH=1000;
+    const pc=document.createElement("canvas"); pc.width=PW; pc.height=PH;
+    const p=pc.getContext("2d");
+    p.fillStyle="#141720"; p.fillRect(0,0,PW,PH);
+    p.strokeStyle="rgba(210,215,225,.28)"; p.lineWidth=1.5; p.strokeRect(40,40,PW-80,PH-80);
+    const margin=80, iw=PW-margin*2, ih=PH-margin*2-60;
+    p.save(); p.beginPath(); p.rect(margin,margin,iw,ih); p.clip();
+    p.drawImage(cvH,0,0,cvH.width,cvH.height, margin,margin,iw,ih);
+    p.drawImage(cvC,0,0,cvC.width,cvC.height, margin,margin,iw,ih);
+    p.restore();
+    const serial = Date.now().toString(16).slice(-6).toUpperCase();
+    const dt = new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+    p.fillStyle="rgba(20,23,32,.88)"; p.fillRect(40,PH-100,520,60);
+    p.strokeStyle="rgba(210,215,225,.18)"; p.lineWidth=1; p.strokeRect(40,PH-100,520,60);
+    if (name) {
+      p.fillStyle="#c8d8f0"; p.font="italic 28px Newsreader, Georgia, serif"; p.textAlign="left";
+      p.fillText(name, 58, PH-68);
+    }
+    p.fillStyle="rgba(138,149,168,.9)"; p.font="14px 'Space Mono', monospace"; p.textAlign="left";
+    p.fillText(("surveyed "+dt+" · Nº "+serial).toUpperCase(), 58, PH-50);
+    p.fillStyle="rgba(80,90,106,.9)"; p.font="13px 'Space Mono', monospace"; p.textAlign="right";
+    p.fillText("PAGES THAT ARE PLACES", PW-58, PH-52);
+    pc.toBlob(b=>{
+      const a=document.createElement("a"); a.href=URL.createObjectURL(b);
+      a.download="cartographer-"+serial.toLowerCase()+".png"; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    },"image/png");
+    toast("map pressed — check your downloads");
+  };
+
+  const makeLink = (name) => {
+    const nameBytes = new TextEncoder().encode(name.slice(0,24));
+    const payload = new Uint8Array(3+nameBytes.length);
+    payload[0]=1; payload[1]=(salt>>8)&255; payload[2]=salt&255;
+    payload.set(nameBytes,3);
+    return location.origin+location.pathname+"#c1"+b64u(payload);
+  };
+
+  document.getElementById("btnkeep").addEventListener("click",()=>{
+    makeKeepsake(document.getElementById("countryname").value.trim());
+  });
+  document.getElementById("btnlink").addEventListener("click",async()=>{
+    const name=document.getElementById("countryname").value.trim();
+    const url=makeLink(name);
+    const text="i drew a country by wandering — open it and you'll find the same terrain:";
+    if (navigator.share) { try{await navigator.share({title:"The Cartographer",text,url});return;}catch(e){if(e&&e.name==="AbortError")return;} }
+    try{await navigator.clipboard.writeText(url);toast("link copied — your country travels in it");}
+    catch(e){location.hash=url.split("#")[1]; toast("your map is in the address bar");}
+  });
+
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape") document.getElementById("namepanel").classList.remove("open");
+  });
+
+  const th=document.getElementById("threshold");
+  const enter=async(sound)=>{
+    th.classList.add("gone");
+    started=true; enterTime=performance.now();
+    if(sound){const on=await Pencil.setOn(true);setSnd(on);}
+  };
+  document.getElementById("enter").addEventListener("click",()=>enter(true));
+  document.getElementById("enterQuiet").addEventListener("click",()=>enter(false));
+
+  const sbtn=document.getElementById("sound");
+  const setSnd=(on)=>{sbtn.setAttribute("aria-pressed",String(on));sbtn.textContent=on?"pencil on":"pencil off";};
+  sbtn.addEventListener("click",async()=>setSnd(await Pencil.setOn(!Pencil.isOn())));
+
+  if(WIN){started=true;enterTime=performance.now();}
+
+  resize();
+  addEventListener("resize",resize,{passive:true});
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

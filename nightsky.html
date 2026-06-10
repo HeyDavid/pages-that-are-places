@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>That Night's Sky — the last hour · Pages that are Places</title>
+<meta name="description" content="Type a night that mattered — a birth, a meeting, a goodbye — and the room will hang that night's sky for you. Name its constellation, keep the poster, send the sky.">
+<meta name="theme-color" content="#030409">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>if(new URLSearchParams(location.search).has("w"))document.documentElement.classList.add("win");</script>
+<style>
+  html.win .chrome,html.win .threshold,html.win .panels,html.win .hud,html.win .naming{display:none!important}
+</style>
+<style>
+  @view-transition { navigation: auto; }
+  :root{
+    --wall:#030409;--cream:#ece9e0;--star:#e9edf6;--mist:#98a0b8;--faint:#6070a0;
+    --cobalt:#6b78ff;--signal:#5b8def;--moon:#f3ecd8;--glow:rgba(200,210,255,.18);
+    --serif:"Newsreader",Georgia,serif;--mono:"Space Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;overscroll-behavior:none}
+  body{background:#030409;color:var(--cream);font-family:var(--mono);-webkit-font-smoothing:antialiased}
+  canvas{position:fixed;inset:0;width:100vw;height:100vh}
+  #sky{z-index:1}
+  ::selection{background:rgba(107,120,255,.32)}
+
+  .chrome{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
+    gap:12px;padding:14px clamp(16px,4vw,30px);pointer-events:none}
+  .chrome>*{pointer-events:auto}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--mist);text-decoration:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;transition:color .3s}
+  .brand:hover{color:var(--cream)}
+  .brand .arw{color:var(--cobalt)}
+  .pill{display:inline-flex;align-items:center;height:36px;padding:0 14px;cursor:pointer;
+    background:rgba(8,11,22,.55);border:1px solid rgba(255,255,255,.08);border-radius:11px;color:var(--mist);
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    transition:color .3s,border-color .3s;text-decoration:none}
+  .pill:hover{color:var(--cream);border-color:rgba(107,120,255,.4)}
+  .pill[aria-pressed="true"]{color:var(--signal);border-color:rgba(91,141,239,.5)}
+
+  .hud{position:fixed;bottom:clamp(16px,3vh,28px);left:clamp(16px,4vw,30px);z-index:10;
+    display:flex;gap:14px;padding:8px 13px;background:rgba(3,4,9,.55);border:1px solid rgba(255,255,255,.08);
+    border-radius:11px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);font-size:11px;color:var(--mist);
+    opacity:0;transition:opacity .8s ease;pointer-events:none}
+  .hud.show{opacity:1}
+  .hud .lbl{color:var(--faint)}
+  .hud .val{color:var(--star);margin-left:5px}
+
+  .threshold{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    background:#030409;text-align:center;padding:24px;transition:opacity 1.1s ease}
+  .threshold.gone{opacity:0;pointer-events:none}
+  .threshold .hr{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--faint)}
+  .threshold h1{font-family:var(--serif);font-weight:400;font-size:clamp(38px,6.5vw,68px);letter-spacing:-.02em;margin:0;color:#f0eee8;view-transition-name:piece-07}
+  .threshold p{margin:0;font-size:12px;color:var(--mist);letter-spacing:.06em;max-width:42ch;line-height:1.9}
+  .threshold .date-row{display:flex;gap:10px;align-items:center;margin-top:4px;flex-wrap:wrap;justify-content:center}
+  .threshold input[type=date]{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;
+    color:var(--cream);font-family:var(--mono);font-size:13px;padding:10px 14px;outline:none;
+    color-scheme:dark;cursor:pointer;transition:border-color .3s}
+  .threshold input[type=date]:focus{border-color:rgba(107,120,255,.5)}
+  .threshold .go{padding:12px 28px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+    color:#03060e;background:var(--moon);border:none;border-radius:11px;box-shadow:0 0 36px rgba(243,236,216,.22);transition:transform .25s,box-shadow .3s}
+  .threshold .go:hover{transform:translateY(-2px);box-shadow:0 0 48px rgba(243,236,216,.38)}
+  .threshold .quiet{background:none;border:none;cursor:pointer;color:var(--faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-decoration:underline;text-underline-offset:4px}
+  .threshold .quiet:hover{color:var(--mist)}
+
+  .naming{position:fixed;bottom:clamp(66px,9vh,100px);left:50%;transform:translateX(-50%);z-index:10;
+    display:flex;gap:8px;align-items:center;opacity:0;transition:opacity 1.2s ease;pointer-events:none;
+    background:rgba(3,4,9,.6);border:1px solid rgba(255,255,255,.09);border-radius:14px;
+    padding:10px 14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);white-space:nowrap;flex-wrap:wrap;justify-content:center}
+  .naming.show{opacity:1;pointer-events:auto}
+  .naming input{background:transparent;border:none;border-bottom:1px solid rgba(200,210,255,.3);color:var(--cream);
+    font-family:var(--mono);font-size:12px;padding:4px 6px;outline:none;width:190px;letter-spacing:.04em;transition:border-color .3s}
+  .naming input:focus{border-bottom-color:rgba(107,120,255,.6)}
+  .naming input::placeholder{color:var(--faint)}
+  .naming .setbtn{padding:7px 14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+    border-radius:8px;border:1px solid rgba(200,210,255,.2);background:rgba(200,210,255,.06);color:var(--mist);transition:color .25s,border-color .3s}
+  .naming .setbtn:hover{color:var(--cream);border-color:rgba(107,120,255,.5)}
+
+  .panels{position:fixed;bottom:clamp(16px,3vh,28px);right:clamp(16px,4vw,30px);z-index:10;
+    display:flex;gap:9px;opacity:0;transition:opacity 1s ease;pointer-events:none}
+  .panels.show{opacity:1;pointer-events:auto}
+
+  #toast{position:fixed;left:50%;bottom:clamp(58px,8vh,80px);transform:translateX(-50%) translateY(8px);z-index:60;padding:10px 16px;
+    background:rgba(3,5,14,.92);border:1px solid rgba(107,120,255,.4);border-radius:11px;font-size:11.5px;color:var(--star);
+    letter-spacing:.03em;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:86vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+<canvas id="sky" aria-label="The night sky for your chosen date, with its constellation."></canvas>
+
+<div class="chrome">
+  <a class="brand" href="index.html"><span class="arw">←</span><span class="txt">the rooms</span></a>
+  <button class="pill" id="sound" type="button" aria-pressed="false">night off</button>
+</div>
+
+<div class="hud" id="hud" aria-live="polite">
+  <span><span class="lbl">night of</span><span class="val" id="hud-date">—</span></span>
+  <span><span class="lbl" aria-hidden="true">·</span><span class="val" id="hud-phase">—</span></span>
+</div>
+
+<div class="threshold" id="threshold">
+  <div class="hr">№07 · the last hour</div>
+  <h1 id="th-title">That Night's Sky.</h1>
+  <p id="th-sub">type a night that mattered — a birth, a meeting, a goodbye —<br>and the room will hang that night's sky for you.</p>
+  <div class="date-row">
+    <input type="date" id="dateInput" aria-label="Choose a date">
+    <button class="go" id="enter" type="button">hang the sky</button>
+  </div>
+  <button class="quiet" id="enterQuiet" type="button">enter quietly (no sound)</button>
+</div>
+
+<div class="naming" id="naming">
+  <input type="text" id="nameInput" maxlength="28" placeholder="name this constellation" aria-label="Name this constellation">
+  <button class="setbtn" id="setName" type="button">set it in the sky</button>
+</div>
+
+<div class="panels" id="panels">
+  <button class="pill" id="keepPoster" type="button">keep the poster</button>
+  <button class="pill" id="sendSky" type="button">send this sky</button>
+  <a class="pill" href="index.html">back to the museum</a>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   THAT NIGHT'S SKY — №07 of Pages that are Places.
+   The last hour. Type a date; the room hangs that night's sky:
+   accurate moon phase, a seeded constellation, background
+   stars that breathe. Name the constellation; keep a poster;
+   share a sky link. Canvas2D + WebAudio drones. No deps.
+   Codec #n1 + base64url[1, yHi, yLo, month, day, ...nameUTF8]
+   ============================================================ */
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const WIN = document.documentElement.classList.contains("win");
+
+/* ---------- moon phase (synodic, Meeus-derived epoch) ---------- */
+const SYNODIC = 29.53058867;
+function moonPhase(date) {
+  const epoch = Date.UTC(2000, 0, 6, 18, 14);
+  const ms = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  let d = ((ms - epoch) / 86400000) % SYNODIC;
+  if (d < 0) d += SYNODIC;
+  return d / SYNODIC;
+}
+function phaseName(p) {
+  if (p < .035) return "new moon";
+  if (p < .24)  return "waxing crescent";
+  if (p < .27)  return "first quarter";
+  if (p < .49)  return "waxing gibbous";
+  if (p < .53)  return "full moon";
+  if (p < .74)  return "waning gibbous";
+  if (p < .77)  return "last quarter";
+  return "waning crescent";
+}
+
+/* ---------- mulberry32 ---------- */
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let z = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z;
+    return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function dateToSeed(y, m, d) { return ((y * 10000) + (m * 100) + d) | 0; }
+
+/* ---------- codec ---------- */
+function b64u(u8) { return btoa(String.fromCharCode(...u8)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function unb64u(s) {
+  s = s.replace(/-/g,"+").replace(/_/g,"/");
+  const b = atob(s);
+  const u = new Uint8Array(b.length);
+  for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  return u;
+}
+function encodePayload(year, month, day, name) {
+  const nameBytes = new TextEncoder().encode(name.slice(0, 28));
+  const u = new Uint8Array(5 + nameBytes.length);
+  u[0] = 1; u[1] = (year >> 8) & 0xff; u[2] = year & 0xff; u[3] = month; u[4] = day;
+  u.set(nameBytes, 5);
+  return b64u(u);
+}
+function decodePayload(s) {
+  try {
+    const u = unb64u(s);
+    if (u.length < 5 || u[0] !== 1) return null;
+    return {
+      year: (u[1] << 8) | u[2], month: u[3], day: u[4],
+      name: u.length > 5 ? new TextDecoder().decode(u.slice(5)) : ""
+    };
+  } catch(e) { return null; }
+}
+function parseHash() {
+  const h = location.hash;
+  if (!h || !h.startsWith("#n1")) return null;
+  return decodePayload(h.slice(3));
+}
+const incoming = parseHash();
+
+/* ---------- sound: detuned drones + shimmer ---------- */
+const Night = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx, master, on = false, built = false;
+  const build = () => {
+    if (built) return; built = true;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0;
+    const comp = ctx.createDynamicsCompressor();
+    master.connect(comp); comp.connect(ctx.destination);
+    [[110, .05], [110.7, .038], [164.8, .032]].forEach(([freq, g]) => {
+      const o = ctx.createOscillator();
+      o.type = "sine"; o.frequency.value = freq;
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 400;
+      const gn = ctx.createGain(); gn.gain.value = g;
+      o.connect(lp); lp.connect(gn); gn.connect(master); o.start();
+    });
+    const len = 2 * ctx.sampleRate;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const ns = ctx.createBufferSource(); ns.buffer = buf; ns.loop = true;
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 4000;
+    const ng = ctx.createGain(); ng.gain.value = .015;
+    ns.connect(hp); hp.connect(ng); ng.connect(master); ns.start();
+  };
+  const setOn = async (v) => {
+    if (v && !built) build();
+    if (built && ctx.state === "suspended") await ctx.resume();
+    on = v;
+    if (built) {
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      if (v) {
+        master.gain.setValueAtTime(0, ctx.currentTime);
+        master.gain.linearRampToValueAtTime(.05, ctx.currentTime + 6);
+      } else {
+        master.gain.setTargetAtTime(.0001, ctx.currentTime, 1.2);
+      }
+    }
+    return on;
+  };
+  return { setOn, isOn: () => on };
+})();
+
+/* ---------- the sky ---------- */
+(() => {
+  const c = document.getElementById("sky");
+  const x = c.getContext("2d");
+  let W = 0, H = 0, dpr = 1, t = 0;
+  let skyReady = false;
+
+  let chosenYear = 0, chosenMonth = 0, chosenDay = 0;
+  let conName = "", conNameSet = false;
+  let stars = [], consStars = [], consLines = [], motes = [];
+  let phase = 0;
+
+  const todayISO = () => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`;
+  };
+  const di = document.getElementById("dateInput");
+  di.value = todayISO();
+
+  const resize = () => {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    c.width = W * dpr; c.height = H * dpr;
+    x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (skyReady) buildScene(chosenYear, chosenMonth, chosenDay, conName);
+  };
+  addEventListener("resize", resize, { passive: true });
+
+  function buildScene(year, month, day, name) {
+    chosenYear = year; chosenMonth = month; chosenDay = day;
+    conName = name || "";
+    const seed = dateToSeed(year, month, day);
+    const rnd = mulberry32(seed);
+
+    const nStars = 90 + ((seed % 41) | 0);
+    stars = [];
+    for (let i = 0; i < nStars; i++) {
+      stars.push({
+        x: rnd() * W, y: rnd() * H * .72,
+        r: .25 + Math.pow(rnd(), 3) * 1.1,
+        a: .08 + rnd() * .55,
+        ph: rnd() * Math.PI * 2, sp: .4 + rnd() * 1.1,
+      });
+    }
+
+    const nCons = 8 + ((seed * 7) % 7 | 0);
+    const cx0 = W * .3, cxW = W * .4, cy0 = H * .12, cyH = H * .38;
+    const raw = [];
+    for (let i = 0; i < nCons; i++) raw.push({ x: cx0 + rnd() * cxW, y: cy0 + rnd() * cyH });
+    const anchor0 = (seed * 3) % nCons | 0;
+    let anchor1 = ((seed * 11) % nCons) | 0;
+    if (anchor1 === anchor0) anchor1 = (anchor0 + 1) % nCons;
+    const anchors = [raw[anchor0], raw[anchor1]];
+    for (let i = 0; i < nCons; i++) {
+      if (i === anchor0 || i === anchor1) continue;
+      const d0 = Math.hypot(raw[i].x - anchors[0].x, raw[i].y - anchors[0].y);
+      const d1 = Math.hypot(raw[i].x - anchors[1].x, raw[i].y - anchors[1].y);
+      const near = d0 < d1 ? anchors[0] : anchors[1];
+      raw[i].x += (near.x - raw[i].x) * .2;
+      raw[i].y += (near.y - raw[i].y) * .2;
+    }
+    consStars = raw.map((s, i) => ({
+      x: s.x, y: s.y,
+      r: (i === anchor0 || i === anchor1) ? 2.6 + rnd() * 1.0 : 1.0 + rnd() * .8,
+      bright: (i === anchor0 || i === anchor1),
+      ph: rnd() * Math.PI * 2,
+    }));
+
+    const visited = new Array(nCons).fill(false);
+    const path = [0]; visited[0] = true;
+    for (let step2 = 1; step2 < nCons; step2++) {
+      const last = path[path.length - 1];
+      let best = -1, bestD = Infinity;
+      for (let j = 0; j < nCons; j++) {
+        if (visited[j]) continue;
+        const d = Math.hypot(consStars[last].x - consStars[j].x, consStars[last].y - consStars[j].y);
+        if (d < bestD) { bestD = d; best = j; }
+      }
+      if (best < 0) break;
+      path.push(best); visited[best] = true;
+    }
+    consLines = [];
+    for (let i = 0; i < path.length - 1; i++) consLines.push([path[i], path[i+1]]);
+
+    const nMotes = 2 + ((seed * 13) % 2 | 0);
+    motes = [];
+    for (let i = 0; i < nMotes; i++) {
+      motes.push({
+        x: rnd() * W, y: rnd() * H * .55,
+        vx: (rnd() - .5) * .04, vy: (rnd() - .5) * .015,
+        r: .8 + rnd() * 1.2, a: .04 + rnd() * .07,
+        ph: rnd() * Math.PI * 2,
+      });
+    }
+
+    phase = moonPhase(new Date(year, month - 1, day));
+    skyReady = true;
+    updateHUD(year, month, day, phase);
+  }
+
+  function updateHUD(year, month, day, ph) {
+    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    document.getElementById("hud-date").textContent = `${months[month-1]} ${day}, ${year}`;
+    document.getElementById("hud-phase").textContent = phaseName(ph);
+    document.getElementById("hud").classList.add("show");
+  }
+
+  function drawMoon(ctx2, cx, cy, R, p, alpha) {
+    const halo = ctx2.createRadialGradient(cx, cy, R * .5, cx, cy, R * 3.4);
+    halo.addColorStop(0, `rgba(243,236,216,${(.18 * alpha).toFixed(3)})`);
+    halo.addColorStop(1, "rgba(243,236,216,0)");
+    ctx2.fillStyle = halo;
+    ctx2.beginPath(); ctx2.arc(cx, cy, R * 3.4, 0, Math.PI * 2); ctx2.fill();
+    ctx2.save();
+    ctx2.beginPath(); ctx2.arc(cx, cy, R, 0, Math.PI * 2); ctx2.clip();
+    ctx2.fillStyle = "#131828"; ctx2.fillRect(cx - R, cy - R, R * 2, R * 2);
+    const wax = p < .5;
+    const k = Math.cos(2 * Math.PI * p);
+    ctx2.fillStyle = "#f3ecd8";
+    ctx2.beginPath();
+    ctx2.arc(cx, cy, R, -Math.PI / 2, Math.PI / 2, !wax);
+    ctx2.closePath(); ctx2.fill();
+    ctx2.beginPath();
+    ctx2.ellipse(cx, cy, Math.abs(k) * R, R, 0, 0, Math.PI * 2);
+    ctx2.fillStyle = (wax ? p < .25 : p >= .75) ? "#131828" : "#f3ecd8";
+    ctx2.fill();
+    ctx2.restore();
+    ctx2.strokeStyle = "rgba(243,236,216,.22)";
+    ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.arc(cx, cy, R, 0, Math.PI * 2); ctx2.stroke();
+  }
+
+  function drawConName(ctx2, nm) {
+    if (!nm) return;
+    const mx = consStars.reduce((a,s)=>a+s.x,0)/consStars.length;
+    const bot = Math.max(...consStars.map(s=>s.y));
+    const ly = bot + 26;
+    ctx2.save();
+    ctx2.font = "11px 'Space Mono', monospace";
+    ctx2.textAlign = "center";
+    const tw = ctx2.measureText(nm.toUpperCase()).width + 16;
+    ctx2.strokeStyle = "rgba(200,210,255,.35)";
+    ctx2.lineWidth = .7;
+    ctx2.beginPath();
+    ctx2.ellipse(mx, ly + 6, tw / 2, 3, 0, Math.PI, 0);
+    ctx2.stroke();
+    ctx2.fillStyle = "rgba(200,210,255,.72)";
+    ctx2.fillText(nm.toUpperCase(), mx, ly);
+    ctx2.restore();
+  }
+
+  function drawBackground() {
+    const bg = x.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, "#030409");
+    bg.addColorStop(.55, "#04060e");
+    bg.addColorStop(.85, "#06091a");
+    bg.addColorStop(1, "#0a0f1e");
+    x.fillStyle = bg; x.fillRect(0, 0, W, H);
+    const hg = x.createLinearGradient(0, H * .75, 0, H);
+    hg.addColorStop(0, "rgba(20,30,70,0)");
+    hg.addColorStop(.6, "rgba(20,30,70,.08)");
+    hg.addColorStop(1, "rgba(30,40,90,.18)");
+    x.fillStyle = hg; x.fillRect(0, H * .75, W, H * .25);
+  }
+
+  function step(now) {
+    t = reduce ? 0 : now * .001;
+    x.clearRect(0, 0, W, H);
+    drawBackground();
+    if (!skyReady) { requestAnimationFrame(step); return; }
+    for (const s of stars) {
+      const alpha = reduce ? s.a : s.a * (.65 + .35 * Math.sin(t * s.sp + s.ph));
+      x.fillStyle = `rgba(233,237,246,${alpha.toFixed(3)})`;
+      x.beginPath(); x.arc(s.x, s.y, s.r, 0, Math.PI * 2); x.fill();
+    }
+    if (!reduce) {
+      for (const m of motes) {
+        m.x += m.vx; m.y += m.vy;
+        if (m.x < -5) m.x = W + 5;
+        if (m.x > W + 5) m.x = -5;
+        if (m.y < -5) m.y = H * .6;
+        const a = m.a * (.7 + .3 * Math.sin(t * .3 + m.ph));
+        x.fillStyle = `rgba(200,210,255,${a.toFixed(3)})`;
+        x.beginPath(); x.arc(m.x, m.y, m.r, 0, Math.PI * 2); x.fill();
+      }
+    }
+    const MR = Math.min(42, Math.max(28, W * .03));
+    drawMoon(x, W * .72, H * .22, MR, phase, 1);
+    x.strokeStyle = "rgba(200,210,255,.16)";
+    x.lineWidth = .8;
+    x.beginPath();
+    for (const [a, b] of consLines) {
+      x.moveTo(consStars[a].x, consStars[a].y);
+      x.lineTo(consStars[b].x, consStars[b].y);
+    }
+    x.stroke();
+    for (const s of consStars) {
+      if (s.bright) {
+        const glow = x.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5.5);
+        glow.addColorStop(0, "rgba(200,215,255,.4)");
+        glow.addColorStop(1, "rgba(200,215,255,0)");
+        x.fillStyle = glow;
+        x.beginPath(); x.arc(s.x, s.y, s.r * 5.5, 0, Math.PI * 2); x.fill();
+      }
+      const sa = reduce ? .9 : .7 + .3 * Math.sin(t * .7 + s.ph);
+      x.fillStyle = s.bright
+        ? `rgba(230,238,255,${(sa * .95).toFixed(3)})`
+        : `rgba(200,210,255,${(sa * .7).toFixed(3)})`;
+      x.beginPath(); x.arc(s.x, s.y, s.r, 0, Math.PI * 2); x.fill();
+    }
+    if (conNameSet && conName) drawConName(x, conName);
+    requestAnimationFrame(step);
+  }
+
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  c.width = W * dpr; c.height = H * dpr;
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  requestAnimationFrame(step);
+
+  /* toast */
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg; el.classList.add("show");
+    clearTimeout(toast._h);
+    toast._h = setTimeout(() => el.classList.remove("show"), 3200);
+  }
+
+  /* sound pill — wired BEFORE any early-return branches so every flow can use it */
+  const sbtn = document.getElementById("sound");
+  function setSnd(on) {
+    sbtn.setAttribute("aria-pressed", String(on));
+    sbtn.textContent = on ? "night on" : "night off";
+  }
+  sbtn.addEventListener("click", async () => setSnd(await Night.setOn(!Night.isOn())));
+
+  /* naming + panels */
+  function bindNaming() {
+    document.getElementById("setName").addEventListener("click", () => {
+      const v = document.getElementById("nameInput").value.trim();
+      if (!v) return;
+      conName = v; conNameSet = true;
+      toast("constellation named — it's in the sky");
+    });
+    document.getElementById("nameInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("setName").click();
+    });
+  }
+  function bindPanels() {
+    document.getElementById("keepPoster").addEventListener("click", () => {
+      if (!skyReady) { toast("hang the sky first"); return; }
+      renderPoster();
+    });
+    document.getElementById("sendSky").addEventListener("click", async () => {
+      if (!skyReady) { toast("hang the sky first"); return; }
+      const payload = encodePayload(chosenYear, chosenMonth, chosenDay, conName);
+      const url = location.origin + location.pathname + "#n1" + payload;
+      const text = "someone hung a sky for you — open it and look up:";
+      if (navigator.share) {
+        try { await navigator.share({ title: "That Night's Sky", text, url }); return; }
+        catch(e) { if (e && e.name === "AbortError") return; }
+      }
+      try { await navigator.clipboard.writeText(url); toast("link copied — the sky travels with it"); }
+      catch(e) { location.hash = "n1" + payload; toast("sky link is in the address bar"); }
+    });
+  }
+
+  /* keepsake poster */
+  function renderPoster() {
+    const PW = 1400, PH = 1800;
+    const pc = document.createElement("canvas");
+    pc.width = PW * 2; pc.height = PH * 2;
+    const p = pc.getContext("2d"); p.scale(2, 2);
+    const bg = p.createLinearGradient(0, 0, 0, PH);
+    bg.addColorStop(0, "#030409"); bg.addColorStop(.7, "#040711"); bg.addColorStop(1, "#07091a");
+    p.fillStyle = bg; p.fillRect(0, 0, PW, PH);
+    const hg = p.createLinearGradient(0, PH * .78, 0, PH);
+    hg.addColorStop(0, "rgba(20,30,70,0)"); hg.addColorStop(1, "rgba(30,40,90,.22)");
+    p.fillStyle = hg; p.fillRect(0, PH * .78, PW, PH * .22);
+    p.strokeStyle = "rgba(200,210,255,.18)"; p.lineWidth = 1.5;
+    p.strokeRect(48, 48, PW - 96, PH - 96);
+    const rnd = mulberry32(dateToSeed(chosenYear, chosenMonth, chosenDay));
+    const nStars = 90 + ((dateToSeed(chosenYear, chosenMonth, chosenDay) % 41) | 0);
+    for (let i = 0; i < nStars; i++) {
+      const sx = rnd() * PW, sy = rnd() * PH * .66;
+      const sr = .35 + Math.pow(rnd(), 3) * 1.4;
+      const sa = .1 + rnd() * .55;
+      p.fillStyle = `rgba(233,237,246,${sa.toFixed(2)})`;
+      p.beginPath(); p.arc(sx, sy, sr, 0, Math.PI * 2); p.fill();
+    }
+    drawMoon(p, PW * .72, PH * .14, 56, phase, 1);
+    const scaleX = PW / W, scaleY = (PH * .62) / H;
+    const pCons = consStars.map(s => ({ ...s, px: s.x * scaleX, py: s.y * scaleY + PH * .08 }));
+    p.strokeStyle = "rgba(200,210,255,.18)"; p.lineWidth = 1;
+    p.beginPath();
+    for (const [a, b] of consLines) {
+      p.moveTo(pCons[a].px, pCons[a].py);
+      p.lineTo(pCons[b].px, pCons[b].py);
+    }
+    p.stroke();
+    for (const s of pCons) {
+      const pr = s.r * 1.6;
+      if (s.bright) {
+        const gl = p.createRadialGradient(s.px, s.py, 0, s.px, s.py, pr * 5);
+        gl.addColorStop(0, "rgba(200,215,255,.45)");
+        gl.addColorStop(1, "rgba(200,215,255,0)");
+        p.fillStyle = gl; p.beginPath(); p.arc(s.px, s.py, pr * 5, 0, Math.PI * 2); p.fill();
+      }
+      p.fillStyle = s.bright ? "rgba(230,238,255,.92)" : "rgba(200,210,255,.72)";
+      p.beginPath(); p.arc(s.px, s.py, pr, 0, Math.PI * 2); p.fill();
+    }
+    if (conName) {
+      const cmx = pCons.reduce((a,s)=>a+s.px,0)/pCons.length;
+      const cbot = Math.max(...pCons.map(s=>s.py));
+      const nly = cbot + 42;
+      p.font = "bold 22px 'Space Mono', monospace";
+      p.textAlign = "center";
+      const ntw = p.measureText(conName.toUpperCase()).width + 24;
+      p.strokeStyle = "rgba(200,210,255,.3)"; p.lineWidth = .8;
+      p.beginPath(); p.ellipse(cmx, nly + 8, ntw / 2, 4.5, 0, Math.PI, 0); p.stroke();
+      p.fillStyle = "rgba(210,220,255,.82)";
+      p.fillText(conName.toUpperCase(), cmx, nly);
+    }
+    const months2 = ["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
+    const serial = ((chosenYear * 10000 + chosenMonth * 100 + chosenDay) % 9999 + 1).toString().padStart(4,"0");
+    p.fillStyle = "rgba(100,115,170,.7)"; p.font = "18px 'Space Mono', monospace";
+    p.textAlign = "left";
+    p.fillText(`NIGHT OF ${months2[chosenMonth-1]} ${chosenDay}, ${chosenYear}  ·  Nº ${serial}`, 90, PH - 90);
+    p.textAlign = "right";
+    p.fillStyle = "rgba(80,95,150,.6)"; p.font = "16px 'Space Mono', monospace";
+    p.fillText("PAGES THAT ARE PLACES", PW - 90, PH - 90);
+    pc.toBlob(b => {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+      a.download = `night-of-${chosenYear}${String(chosenMonth).padStart(2,"0")}${String(chosenDay).padStart(2,"0")}.png`;
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }, "image/png");
+    toast("poster saved — check your downloads");
+  }
+
+  /* ---------- win-mode: tonight's sky, no UI ---------- */
+  if (WIN) {
+    const n = new Date();
+    buildScene(n.getFullYear(), n.getMonth() + 1, n.getDate(), "");
+    return;
+  }
+
+  /* ---------- incoming link ---------- */
+  if (incoming) {
+    const { year, month, day, name } = incoming;
+    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const th = document.getElementById("threshold");
+    const sub = document.getElementById("th-sub");
+    const drow = th.querySelector(".date-row");
+    const quiet = document.getElementById("enterQuiet");
+    sub.textContent = `someone hung a sky for you — ${months[month-1]} ${day}, ${year}`;
+    drow.innerHTML = `<button class="go" id="enter2" type="button">look up</button>`;
+    if (quiet) quiet.style.display = "none";
+    document.getElementById("enter2").addEventListener("click", async () => {
+      th.classList.add("gone");
+      setSnd(await Night.setOn(true));
+      buildScene(year, month, day, name);
+      if (name) { conNameSet = true; conName = name; }
+      setTimeout(() => {
+        document.getElementById("naming").classList.add("show");
+        document.getElementById("panels").classList.add("show");
+        setTimeout(() => toast("hang one of your own — open the room fresh, any date"), 4000);
+      }, 1800);
+    });
+    bindNaming(); bindPanels();
+    return;
+  }
+
+  /* ---------- normal threshold ---------- */
+  const enter = async (sound) => {
+    const val = document.getElementById("dateInput").value;
+    if (!val) { toast("pick a night first"); return; }
+    const [y, m, d] = val.split("-").map(Number);
+    document.getElementById("threshold").classList.add("gone");
+    if (sound) { setSnd(await Night.setOn(true)); }
+    buildScene(y, m, d, "");
+    setTimeout(() => {
+      document.getElementById("naming").classList.add("show");
+      document.getElementById("panels").classList.add("show");
+    }, 1400);
+  };
+  document.getElementById("enter").addEventListener("click", () => enter(true));
+  document.getElementById("enterQuiet").addEventListener("click", () => enter(false));
+  bindNaming();
+  bindPanels();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="440" viewBox="0 0 1280 440" role="img" aria-label="The Cartographer — hand-inked contour lines of an unfinished country on dark vellum, a pencil trail still drawing it">
+<rect width="1280" height="440" fill="#0d1014"/>
+<rect x="60" y="34" width="1160" height="372" rx="8" fill="#181b20" stroke="#2a2f38" stroke-width="1.5"/>
+<g fill="none" stroke="#d2d7e1" stroke-opacity=".45" stroke-width="1.4">
+<path d="M340 240 q 40 -52 104 -44 q 70 8 86 56 q 12 44 -34 64 q -62 26 -118 -6 q -52 -32 -38 -70 Z"/>
+<path d="M368 238 q 32 -36 76 -30 q 50 6 62 40 q 8 32 -26 46 q -46 18 -86 -4 q -38 -24 -26 -52 Z"/>
+<path d="M396 238 q 22 -22 48 -18 q 32 4 40 24 q 6 20 -16 30 q -30 12 -56 -4 q -24 -14 -16 -32 Z"/>
+</g>
+<path d="M150 330 q 180 28 360 6 q 220 -26 420 10 q 120 22 210 -6" fill="none" stroke="#b9c8e6" stroke-opacity=".8" stroke-width="2"/>
+<g stroke="#aab9d2" stroke-opacity=".18" stroke-width=".8">
+<line x1="160" y1="345" x2="200" y2="385"/><line x1="200" y1="345" x2="240" y2="385"/><line x1="240" y1="345" x2="280" y2="385"/><line x1="600" y1="352" x2="640" y2="392"/><line x1="640" y1="352" x2="680" y2="392"/><line x1="980" y1="345" x2="1020" y2="385"/><line x1="1020" y1="345" x2="1060" y2="385"/>
+</g>
+<g fill="none" stroke="#d2d7e1" stroke-opacity=".3" stroke-width="1.2">
+<path d="M760 150 q 60 -40 130 -22 q 64 16 60 64 q -4 42 -64 50 q -70 8 -110 -28 q -34 -32 -16 -64 Z"/>
+<path d="M796 158 q 40 -24 84 -12 q 40 10 36 40 q -4 26 -42 32 q -46 6 -72 -18 q -22 -20 -6 -42 Z"/>
+</g>
+<path d="M210 110 C 350 70 520 180 660 130 S 920 90 1080 140" fill="none" stroke="#9ab4d8" stroke-opacity=".5" stroke-width="1.6" stroke-dasharray="1 8"/>
+<circle cx="1080" cy="140" r="4" fill="#c8d8f0"/>
+<text x="92" y="80" font-family="Space Mono, monospace" font-size="15" fill="#505a6a" letter-spacing="2">terra incognita — until you move</text>
+<text x="1185" y="385" font-family="Georgia, serif" font-style="italic" font-size="17" fill="#8a95a8" text-anchor="end">your wandering, surveyed</text>
+</svg>

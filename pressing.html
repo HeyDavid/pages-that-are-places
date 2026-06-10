@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Pressing — №06, the sixth hour · Pages that are Places</title>
+<meta name="description" content="One flower opens here each day, for sixty seconds, shaped a little by how you hold it. When it dies, you keep the pressing.">
+<meta name="theme-color" content="#14100a">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>if(new URLSearchParams(location.search).has("w"))document.documentElement.classList.add("win");</script>
+<style>
+  html.win .chrome,html.win .threshold,html.win .fin{display:none!important}
+</style>
+<style>
+  @view-transition { navigation: auto; }
+  :root{
+    --room:#14100a;--deep:#1c160e;--cream:#f0e8da;--mist:#a49380;--faint:#6f6052;
+    --gold:#ffce8a;--amber:#e8a050;--warm:#cf7a30;--glow:rgba(207,122,48,.18);
+    --serif:"Newsreader",Georgia,serif;--mono:"Space Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:
+      radial-gradient(90% 40% at 50% 108%,rgba(207,122,48,.22),transparent 65%),
+      radial-gradient(60% 25% at 50% 112%,rgba(255,180,80,.12),transparent 55%),
+      var(--room);
+    color:var(--cream);font-family:var(--mono);-webkit-font-smoothing:antialiased;min-height:100vh;overflow:hidden}
+  canvas#garden{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
+  ::selection{background:rgba(255,206,138,.3)}
+
+  .chrome{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
+    gap:12px;padding:14px clamp(16px,4vw,30px);pointer-events:none}
+  .chrome>*{pointer-events:auto}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--mist);text-decoration:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;transition:color .3s}
+  .brand:hover{color:var(--cream)}
+  .brand .arw{color:var(--amber)}
+  .tools{display:flex;gap:10px;align-items:center}
+  .hud{display:flex;gap:14px;padding:8px 13px;background:rgba(28,20,14,.55);border:1px solid rgba(240,232,218,.08);
+    border-radius:11px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);font-size:11px;color:var(--mist)}
+  .hud .lbl{color:var(--faint)}
+  .hud .val{color:var(--gold);font-variant-numeric:tabular-nums;margin-left:6px}
+  .pill{display:inline-flex;align-items:center;height:36px;padding:0 14px;cursor:pointer;
+    background:rgba(28,20,14,.55);border:1px solid rgba(240,232,218,.09);border-radius:11px;color:var(--mist);
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);transition:color .3s,border-color .3s}
+  .pill:hover{color:var(--cream);border-color:rgba(255,206,138,.4)}
+  .pill[aria-pressed="true"]{color:var(--gold);border-color:rgba(255,206,138,.5)}
+
+  .threshold{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    background:var(--room);text-align:center;padding:24px;transition:opacity 1.1s ease}
+  .threshold.gone{opacity:0;pointer-events:none}
+  .threshold .hr{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--faint)}
+  .threshold h1{font-family:var(--serif);font-weight:400;font-size:clamp(40px,7vw,72px);letter-spacing:-.02em;margin:0;color:#f6efe2;view-transition-name:piece-06}
+  .threshold p{margin:0;font-size:12px;color:var(--mist);letter-spacing:.06em;max-width:44ch;line-height:1.9}
+  .threshold .go{margin-top:14px;padding:14px 32px;font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+    color:#160e06;background:var(--gold);border:none;border-radius:12px;box-shadow:0 0 36px rgba(255,206,138,.25);transition:transform .25s,box-shadow .3s}
+  .threshold .go:hover{transform:translateY(-2px);box-shadow:0 0 48px rgba(255,206,138,.4)}
+  .threshold .quiet{background:none;border:none;cursor:pointer;color:var(--faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-decoration:underline;text-underline-offset:4px}
+  .threshold .quiet:hover{color:var(--mist)}
+
+  .fin{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+    text-align:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 1.4s ease}
+  .fin.show{opacity:1;pointer-events:auto}
+  .fin .fk{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+  .fin .locked{font-family:var(--serif);font-style:italic;font-size:clamp(17px,2.4vw,22px);color:var(--mist);max-width:38ch;line-height:1.8}
+  .fin .meta{font-size:11px;letter-spacing:.1em;color:var(--faint);line-height:2}
+  .fin .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .btn{padding:12px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:10px;
+    border:1px solid rgba(240,232,218,.14);background:rgba(240,232,218,.05);color:var(--mist);transition:color .25s,border-color .3s,background .3s}
+  .btn:hover{color:var(--cream);border-color:rgba(255,206,138,.5)}
+  .btn.primary{background:var(--gold);color:#160e06;border-color:transparent}
+  .btn.primary:hover{background:#ffe2b0}
+
+  #toast{position:fixed;left:50%;bottom:60px;transform:translateX(-50%) translateY(8px);z-index:60;padding:10px 16px;
+    background:rgba(28,20,14,.94);border:1px solid rgba(255,206,138,.4);border-radius:11px;font-size:11.5px;color:var(--gold);
+    letter-spacing:.03em;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:86vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+<canvas id="garden" aria-label="A single flower blooming slowly in warm dim light"></canvas>
+
+<div class="chrome">
+  <a class="brand" href="index.html"><span class="arw">←</span><span class="txt">the rooms</span></a>
+  <div class="tools">
+    <div class="hud" aria-live="polite" id="hud"><span><span class="lbl">remaining</span><span class="val" id="hud-time">1:00</span></span></div>
+    <button class="pill" id="sound" type="button" aria-pressed="false">garden off</button>
+  </div>
+</div>
+
+<div class="threshold" id="threshold">
+  <div class="hr">№06 · the sixth hour</div>
+  <h1>The Pressing.</h1>
+  <p id="th-sub">one flower opens here each day, for sixty seconds, shaped a little by how you hold it. when it dies, you keep the pressing.</p>
+  <button class="go" id="enter" type="button">let it open</button>
+  <button class="quiet" id="enterQuiet" type="button">enter quietly (no sound)</button>
+</div>
+
+<section class="fin" id="fin" aria-live="polite">
+  <p class="fk" id="fin-label">pressing — №<span id="fin-serial">000000</span></p>
+  <p class="locked" id="fin-msg"></p>
+  <p class="meta" id="fin-meta"></p>
+  <div class="row">
+    <button class="btn primary" id="keep" type="button">keep the pressing</button>
+    <button class="btn" id="gift" type="button">let someone grow it (a link)</button>
+    <a class="btn" href="index.html">back to the museum</a>
+  </div>
+</section>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   THE PRESSING — №06 of Pages that are Places. The sixth hour.
+   One flower blooms for sixty seconds, shaped by your attention.
+   Day-seeded; daily lock; keepsake poster; gift link codec.
+   Canvas2D bezier petals + bowed-tone WebAudio synthesis.
+   ============================================================ */
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const WIN = document.documentElement.classList.contains("win");
+
+/* ---------- date helpers ---------- */
+const todayKey = () => {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+};
+const todayStr = () => new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+const todayISO = () => {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+};
+
+/* ---------- mulberry32 ---------- */
+const mulberry32 = (seed) => {
+  let s = seed >>> 0;
+  return () => {
+    s += 0x6D2B79F5; let t = s;
+    t = Math.imul(t ^ (t >>> 15), 1 | t);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+/* ---------- gift codec (#p1[1, yHi,yLo, m, d, gestByte, saltHi, saltLo]) ---------- */
+const b64u = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const unb64u = (s) => {
+  s = s.replace(/-/g, "+").replace(/_/g, "/");
+  const b = atob(s), u = new Uint8Array(b.length);
+  for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  return u;
+};
+const readGiftHash = () => {
+  const h = location.hash;
+  if (!h || !h.startsWith("#p1")) return null;
+  try {
+    const u = unb64u(h.slice(3));
+    if (u.length < 8 || u[0] !== 1) return null;
+    const yr = (u[1] << 8) | u[2], mo = u[3], dy = u[4];
+    const gestAngle = (u[5] / 255) * Math.PI * 2;
+    const salt = (u[6] << 8) | u[7];
+    return { yr, mo, dy, gestAngle, salt, dateKey: yr * 10000 + mo * 100 + dy };
+  } catch (e) { return null; }
+};
+
+const gift = readGiftHash();
+const isGift = !!gift;
+const giftOnceKey = gift ? "pressing-gift-used-" + gift.dateKey + "-" + ((gift.salt & 0xffff).toString(16)) : null;
+
+/* ---------- localStorage lock ---------- */
+const lockKey = "pressing-" + todayISO();
+const getLock = () => { try { const v = localStorage.getItem(lockKey); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+const setLock = (data) => { try { localStorage.setItem(lockKey, JSON.stringify(data)); } catch (e) {} };
+const checkGiftUsed = () => { if (!giftOnceKey) return false; try { return !!localStorage.getItem(giftOnceKey); } catch (e) { return false; } };
+const markGiftUsed = () => { if (!giftOnceKey) return; try { localStorage.setItem(giftOnceKey, "1"); } catch (e) {} };
+
+let effectiveDateKey, effectiveGestAngle, effectiveSalt;
+if (isGift && !checkGiftUsed()) {
+  effectiveDateKey = gift.dateKey;
+  effectiveGestAngle = gift.gestAngle;
+  effectiveSalt = gift.salt;
+} else {
+  effectiveDateKey = todayKey();
+  effectiveGestAngle = null;
+  effectiveSalt = 0;
+}
+
+const BLOOM_SECS = 60;
+const DIE_SECS = 6;
+const EASE = (t) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/* ---------- audio: bowed tone + felt note ---------- */
+const Garden = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx, master, on = false, built = false, noteT = 0;
+  const build = () => {
+    if (built) return; built = true;
+    ctx = new AC(); master = ctx.createGain(); master.gain.value = 0;
+    const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
+  };
+  const bow = (freq, startGain, targetGain, durSecs) => {
+    if (!built || !on) return;
+    const t = ctx.currentTime;
+    const osc1 = ctx.createOscillator(); osc1.type = "sine"; osc1.frequency.value = freq;
+    const osc2 = ctx.createOscillator(); osc2.type = "sine"; osc2.frequency.value = freq * 1.003;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1200;
+    const g = ctx.createGain(); g.gain.setValueAtTime(startGain, t);
+    g.gain.linearRampToValueAtTime(targetGain, t + durSecs * .6);
+    g.gain.linearRampToValueAtTime(targetGain * .7, t + durSecs);
+    osc1.connect(lp); osc2.connect(lp); lp.connect(g); g.connect(master);
+    osc1.start(t); osc2.start(t); osc1.stop(t + durSecs + .2); osc2.stop(t + durSecs + .2);
+  };
+  const feltNote = (freq) => {
+    if (!built || !on) return;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator(); osc.type = "triangle"; osc.frequency.value = freq;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 400;
+    lp.frequency.exponentialRampToValueAtTime(80, t + .8);
+    const g = ctx.createGain(); g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.0001, t + 1.1);
+    osc.connect(lp); lp.connect(g); g.connect(master);
+    osc.start(t); osc.stop(t + 1.2);
+  };
+  const setOn = async (v) => {
+    if (v && !built) build();
+    if (built && ctx.state === "suspended") await ctx.resume();
+    on = v;
+    if (built) master.gain.setTargetAtTime(v ? .14 : .0001, ctx.currentTime, 1.2);
+    return on;
+  };
+  const openSwell = () => { bow(196, .001, .12, 8); noteT = (ctx ? ctx.currentTime : 0) + BLOOM_SECS * .9; };
+  const fullBloomSwell = () => { bow(220, .04, .09, 6); };
+  const closeTone = () => { feltNote(98); };
+  const tick = () => {
+    if (!on || !built) return;
+    if (noteT > 0 && ctx.currentTime >= noteT) { noteT = 0; fullBloomSwell(); }
+  };
+  return { setOn, isOn: () => on, openSwell, closeTone, tick };
+})();
+
+/* ---------- canvas + flower ---------- */
+(() => {
+  const c = document.getElementById("garden"), x = c.getContext("2d");
+  let W = 0, H = 0, dpr = 1;
+  const resize = () => {
+    dpr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+    c.width = W * dpr; c.height = H * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  resize(); addEventListener("resize", resize, { passive: true });
+
+  /* pointer */
+  let pxC = -1, pyC = -1, pDown = false, gestureAngles = [], gestureAvgAngle = null;
+  addEventListener("pointermove", (e) => {
+    pxC = e.clientX; pyC = e.clientY;
+    if (pDown && !WIN) {
+      const angle = Math.atan2(pyC - H * .62, pxC - W * .5);
+      gestureAngles.push(angle);
+      if (gestureAngles.length > 200) gestureAngles.shift();
+      let sx = 0, sy = 0;
+      for (const a of gestureAngles) { sx += Math.cos(a); sy += Math.sin(a); }
+      gestureAvgAngle = Math.atan2(sy, sx);
+    }
+  }, { passive: true });
+  addEventListener("pointerdown", () => { pDown = true; }, { passive: true });
+  addEventListener("pointerup", () => { pDown = false; }, { passive: true });
+  addEventListener("pointercancel", () => { pDown = false; }, { passive: true });
+
+  /* flower config from seed */
+  const buildFlower = (dateKey, gestAngle, salt) => {
+    const seed = (dateKey * 1000 + (salt || 0)) >>> 0;
+    const rnd = mulberry32(seed);
+    const n = 7 + Math.floor(rnd() * 5);
+    const hueGroups = [340, 38, 270, 160];
+    const baseHue = hueGroups[Math.floor(rnd() * hueGroups.length)];
+    const saturation = 55 + rnd() * 30;
+    const lightBase = 52 + rnd() * 18;
+    const petals = [];
+    for (let i = 0; i < n; i++) petals.push({ lightAdj: (rnd() - .5) * 12 });
+    const petalColors = petals.map(p => ({
+      hsl: `hsl(${baseHue + Math.floor((rnd() - .5) * 14)},${saturation.toFixed(0)}%,${(lightBase + p.lightAdj).toFixed(0)}%)`
+    }));
+    return { n, baseHue, saturation, lightBase, petalColors, gestAngle: gestAngle !== null ? gestAngle : (rnd() * Math.PI * 2), salt: salt || 0 };
+  };
+  const FLOWER = buildFlower(effectiveDateKey, effectiveGestAngle, effectiveSalt);
+
+  /* draw flower */
+  const drawFlower = (cx, cy, growth, leanAngle, leanStrength, now) => {
+    if (growth <= 0) return;
+    const maxR = Math.min(W, H) * .28 * Math.min(growth + .05, 1);
+    const n = FLOWER.n;
+    x.save();
+    x.translate(cx, cy);
+    const leanRot = leanStrength * Math.sin(leanAngle) * .22;
+    const leanSkewX = leanStrength * Math.cos(leanAngle) * .12;
+    x.transform(1, 0, leanSkewX, 1, 0, 0);
+    x.rotate(leanRot);
+    const glowR = maxR * 1.6;
+    const gl = x.createRadialGradient(0, 0, 0, 0, 0, glowR);
+    gl.addColorStop(0, `rgba(255,190,100,${(0.13 * growth).toFixed(3)})`);
+    gl.addColorStop(.5, `rgba(200,140,60,${(0.07 * growth).toFixed(3)})`);
+    gl.addColorStop(1, "rgba(200,140,60,0)");
+    x.fillStyle = gl; x.beginPath(); x.arc(0, 0, glowR, 0, Math.PI * 2); x.fill();
+    x.shadowBlur = 18 * growth;
+    x.shadowColor = `rgba(255,180,90,${(0.5 * growth).toFixed(2)})`;
+    for (let ring = 1; ring >= 0; ring--) {
+      const ringGrowth = ring === 1 ? growth * .85 : growth;
+      const ringR = ring === 1 ? maxR * .5 : maxR;
+      const ringRot = ring === 1 ? Math.PI / n : 0;
+      const ringAlpha = ring === 1 ? .4 : 1;
+      for (let i = 0; i < n; i++) {
+        const theta = (i / n) * Math.PI * 2 + ringRot;
+        const tipX = Math.cos(theta) * ringR, tipY = Math.sin(theta) * ringR;
+        const cp1Angle = theta - .3, cp2Angle = theta + .3, cpR = ringR * .8;
+        const cp1x = Math.cos(cp1Angle) * cpR, cp1y = Math.sin(cp1Angle) * cpR;
+        const cp2x = Math.cos(cp2Angle) * cpR, cp2y = Math.sin(cp2Angle) * cpR;
+        const backR = ringR * .08;
+        const bx2 = Math.cos(theta + Math.PI) * backR, by2 = Math.sin(theta + Math.PI) * backR;
+        x.globalAlpha = ringAlpha * ringGrowth;
+        x.fillStyle = FLOWER.petalColors[i % FLOWER.petalColors.length].hsl;
+        x.strokeStyle = "rgba(255,255,255,0.12)"; x.lineWidth = .8;
+        x.beginPath();
+        x.moveTo(bx2, by2);
+        x.bezierCurveTo(cp1x, cp1y, tipX, tipY, tipX, tipY);
+        x.bezierCurveTo(cp2x, cp2y, bx2, by2, bx2, by2);
+        x.closePath(); x.fill(); x.stroke();
+      }
+    }
+    x.globalAlpha = growth * .85;
+    x.shadowBlur = 0;
+    const sR = maxR * .28;
+    for (let i = 0; i < 20; i++) {
+      const ang = (i / 20) * Math.PI * 2 + (now ? now * .0001 : 0);
+      const len = sR * (.55 + .45 * Math.sin(i * 1.37 + (now ? now * .0005 : 0)));
+      x.strokeStyle = `hsl(${Math.floor(FLOWER.baseHue * .9 + 50) % 360},90%,75%)`;
+      x.lineWidth = 1.1;
+      x.beginPath();
+      x.moveTo(Math.cos(ang) * 3, Math.sin(ang) * 3);
+      x.lineTo(Math.cos(ang) * len, Math.sin(ang) * len);
+      x.stroke();
+    }
+    x.globalAlpha = growth;
+    const discR = maxR * .12;
+    const discG = x.createRadialGradient(0, 0, 0, 0, 0, discR);
+    discG.addColorStop(0, `hsl(${FLOWER.baseHue + 20},80%,80%)`);
+    discG.addColorStop(1, `hsl(${FLOWER.baseHue},70%,55%)`);
+    x.fillStyle = discG;
+    x.beginPath(); x.arc(0, 0, discR, 0, Math.PI * 2); x.fill();
+    x.globalAlpha = 1; x.shadowBlur = 0;
+    x.restore();
+  };
+
+  /* state machine: idle | blooming | dying | dead | locked */
+  let state = "idle";
+  let t0 = 0, tDie = 0, lastGrowth = 0;
+  let started = WIN;
+  let finalGrowth = 0, finalGestAngle = 0, finalLeanStrength = 0;
+  let soundedOpen = false, reducedShown = false;
+
+  const lock = !WIN && getLock();
+  const giftAlreadyUsed = isGift && checkGiftUsed();
+  if (lock || giftAlreadyUsed) state = "locked";
+
+  const hudTime = document.getElementById("hud-time");
+  const updateHud = (secsRemaining) => {
+    if (!hudTime) return;
+    const m = Math.floor(secsRemaining / 60);
+    const s = String(Math.floor(secsRemaining % 60)).padStart(2, "0");
+    hudTime.textContent = m + ":" + s;
+  };
+
+  /* toast (declared before first possible use) */
+  const toast = (m) => {
+    const el = document.getElementById("toast");
+    el.textContent = m; el.classList.add("show");
+    clearTimeout(toast._h); toast._h = setTimeout(() => el.classList.remove("show"), 3400);
+  };
+
+  /* fin panel */
+  const showFin = (isReduced) => {
+    const fin = document.getElementById("fin");
+    const msg = document.getElementById("fin-msg");
+    const meta = document.getElementById("fin-meta");
+    const serialEl = document.getElementById("fin-serial");
+    const serial = (effectiveDateKey).toString(16).slice(-6).toUpperCase();
+    serialEl.textContent = serial;
+    if (isGift && checkGiftUsed()) msg.textContent = "this flower was a gift — it opened once, for you.";
+    else if (getLock() && !isReduced && !WIN) msg.textContent = "today's flower has already opened for you. tomorrow's will be different.";
+    else msg.textContent = "the pressing is yours.";
+    meta.textContent = "bloomed " + todayStr() + " · 60 seconds · Nº " + serial;
+    fin.classList.add("show");
+    document.getElementById("hud").style.display = "none";
+  };
+
+  /* main loop */
+  const step = (now) => {
+    x.clearRect(0, 0, W, H);
+    if (!started && !WIN) { requestAnimationFrame(step); return; }
+    const cx = W * .5, cy = H * .62;
+    let leanAngle = 0, leanStrength = 0;
+
+    if (WIN) {
+      if (state === "idle" || state === "locked") { state = "blooming"; t0 = now; }
+      if (state === "blooming") {
+        const elapsed = (now - t0) / 1000;
+        const growth = EASE(Math.min(elapsed / (reduce ? 10 : BLOOM_SECS), 1));
+        drawFlower(cx, cy, growth, 0, 0, now);
+        if (elapsed >= (reduce ? 10 : BLOOM_SECS)) { state = "dying"; tDie = now; finalGrowth = 1; }
+      } else if (state === "dying") {
+        const elapsed = (now - tDie) / 1000;
+        const growth = finalGrowth * (1 - EASE(Math.min(elapsed / DIE_SECS, 1)));
+        drawFlower(cx, cy, growth, 0, 0, now);
+        if (elapsed >= DIE_SECS + .5) state = "idle";
+      }
+      requestAnimationFrame(step); return;
+    }
+
+    if (state === "idle" || state === "locked" || state === "dead") {
+      if (state === "locked" || state === "dead") drawFlower(cx, cy, state === "locked" ? .85 : 0, 0, 0, now);
+      Garden.tick();
+      requestAnimationFrame(step); return;
+    }
+
+    if (state === "blooming") {
+      const elapsed = (now - t0) / 1000;
+      const speedBoost = pDown ? 1.15 : 1.0;
+      const boostedElapsed = elapsed * speedBoost;
+      if (pxC >= 0) {
+        const dx = pxC - cx, dy = pyC - cy;
+        leanAngle = Math.atan2(dy, dx);
+        leanStrength = Math.min(1, Math.hypot(dx, dy) / (Math.min(W, H) * .4)) * (pDown ? 1 : .5);
+      }
+      const growth = reduce ? 1 : EASE(Math.min(boostedElapsed / BLOOM_SECS, 1));
+      lastGrowth = growth;
+      drawFlower(cx, cy, growth, leanAngle, leanStrength, now);
+      updateHud(Math.max(0, BLOOM_SECS / speedBoost - elapsed));
+      if (!soundedOpen) { soundedOpen = true; Garden.openSwell(); }
+      if (!reduce && boostedElapsed >= BLOOM_SECS) {
+        finalGrowth = growth;
+        finalGestAngle = gestureAvgAngle !== null ? gestureAvgAngle : (effectiveGestAngle !== null ? effectiveGestAngle : 0);
+        finalLeanStrength = leanStrength;
+        state = "dying"; tDie = now;
+        const sl = getLock() || {};
+        sl.seed = effectiveDateKey; sl.gestAngle = finalGestAngle; sl.salt = effectiveSalt;
+        setLock(sl);
+        if (isGift) markGiftUsed();
+        Garden.closeTone();
+      }
+      if (reduce && !reducedShown) {
+        reducedShown = true;
+        setTimeout(() => { state = "dead"; showFin(true);
+          const sl = getLock() || {}; sl.seed = effectiveDateKey; sl.gestAngle = 0; sl.salt = effectiveSalt; setLock(sl);
+        }, 20000);
+      }
+    } else if (state === "dying") {
+      const elapsed = (now - tDie) / 1000;
+      const growth = finalGrowth * (1 - EASE(Math.min(elapsed / DIE_SECS, 1)));
+      drawFlower(cx, cy, growth, finalGestAngle, finalLeanStrength * (1 - elapsed / DIE_SECS), now);
+      updateHud(0);
+      if (elapsed >= DIE_SECS + .5) { state = "dead"; showFin(false); }
+    }
+    Garden.tick();
+    requestAnimationFrame(step);
+  };
+
+  /* locked state on arrival */
+  if (state === "locked") {
+    const lockData = getLock();
+    const lockedFlower = buildFlower(lockData ? lockData.seed : effectiveDateKey,
+      lockData ? lockData.gestAngle : 0, lockData ? lockData.salt : 0);
+    Object.assign(FLOWER, lockedFlower);
+    started = true;
+    const fin = document.getElementById("fin");
+    const msg = document.getElementById("fin-msg");
+    const meta = document.getElementById("fin-meta");
+    const serialEl = document.getElementById("fin-serial");
+    const serial = (effectiveDateKey).toString(16).slice(-6).toUpperCase();
+    serialEl.textContent = serial;
+    msg.textContent = giftAlreadyUsed
+      ? "this flower was a gift — it opened once, for you."
+      : "today's flower has already opened for you. tomorrow's will be different.";
+    meta.textContent = "bloomed " + todayStr() + " · 60 seconds · Nº " + serial;
+    fin.classList.add("show");
+    document.getElementById("hud").style.display = "none";
+    document.getElementById("threshold").classList.add("gone");
+  }
+  requestAnimationFrame(step);
+
+  /* keepsake poster */
+  const doKeepsake = () => {
+    const lockData = getLock() || {};
+    const kFlower = buildFlower(lockData.seed || effectiveDateKey, lockData.gestAngle || 0, lockData.salt || 0);
+    Object.assign(FLOWER, kFlower);
+    const PW = 1400, PH = 1800;
+    const pc = document.createElement("canvas"); pc.width = PW * 2; pc.height = PH * 2;
+    const p = pc.getContext("2d"); p.scale(2, 2);
+    p.fillStyle = "#110d08"; p.fillRect(0, 0, PW, PH);
+    p.strokeStyle = "rgba(240,232,218,.28)"; p.lineWidth = 2; p.strokeRect(50, 50, 1300, 1700);
+    const gg = p.createRadialGradient(PW / 2, PH * .72, 20, PW / 2, PH * .72, 320);
+    gg.addColorStop(0, "rgba(207,122,48,.32)"); gg.addColorStop(1, "rgba(207,122,48,0)");
+    p.fillStyle = gg; p.fillRect(0, 0, PW, PH);
+    p.save(); p.translate(PW / 2, PH * .48);
+    p.shadowBlur = 22; p.shadowColor = "rgba(255,180,90,.4)";
+    const maxR2 = 320, n2 = FLOWER.n;
+    for (let ring = 1; ring >= 0; ring--) {
+      const rR = ring === 1 ? maxR2 * .5 : maxR2;
+      const rRot = ring === 1 ? Math.PI / n2 : 0;
+      const rAlpha = ring === 1 ? .4 : 1;
+      for (let i = 0; i < n2; i++) {
+        const theta = (i / n2) * Math.PI * 2 + rRot;
+        const tipX = Math.cos(theta) * rR, tipY = Math.sin(theta) * rR;
+        const cp1a = theta - .3, cp2a = theta + .3, cpR2 = rR * .8;
+        const bx3 = Math.cos(theta + Math.PI) * rR * .08, by3 = Math.sin(theta + Math.PI) * rR * .08;
+        p.globalAlpha = rAlpha;
+        p.fillStyle = FLOWER.petalColors[i % FLOWER.petalColors.length].hsl;
+        p.strokeStyle = "rgba(255,255,255,0.10)"; p.lineWidth = .8;
+        p.beginPath();
+        p.moveTo(bx3, by3);
+        p.bezierCurveTo(Math.cos(cp1a) * cpR2, Math.sin(cp1a) * cpR2, tipX, tipY, tipX, tipY);
+        p.bezierCurveTo(Math.cos(cp2a) * cpR2, Math.sin(cp2a) * cpR2, bx3, by3, bx3, by3);
+        p.closePath(); p.fill(); p.stroke();
+      }
+    }
+    p.globalAlpha = .9; p.shadowBlur = 0;
+    for (let i = 0; i < 20; i++) {
+      const ang = (i / 20) * Math.PI * 2, len = maxR2 * .28 * (.55 + .45 * Math.sin(i * 1.37));
+      p.strokeStyle = `hsl(${(FLOWER.baseHue + 50) % 360},90%,75%)`; p.lineWidth = 1.2;
+      p.beginPath(); p.moveTo(Math.cos(ang) * 3, Math.sin(ang) * 3); p.lineTo(Math.cos(ang) * len, Math.sin(ang) * len); p.stroke();
+    }
+    p.globalAlpha = 1;
+    const dR = maxR2 * .12;
+    const dG2 = p.createRadialGradient(0, 0, 0, 0, 0, dR);
+    dG2.addColorStop(0, `hsl(${FLOWER.baseHue + 20},80%,82%)`);
+    dG2.addColorStop(1, `hsl(${FLOWER.baseHue},70%,56%)`);
+    p.fillStyle = dG2; p.beginPath(); p.arc(0, 0, dR, 0, Math.PI * 2); p.fill();
+    p.restore();
+    const w1 = ["Lumen","Ignis","Aurora","Cinis","Vesper","Noctis","Solis","Petalis"];
+    const w2 = ["lumenis","noctae","ignita","vesperalis","cinerea","solaris","petalis","aurorae"];
+    const rndSeed = mulberry32((effectiveDateKey + (lockData.salt || 0) + 7) >>> 0);
+    const binomial = w1[Math.floor(rndSeed() * w1.length)] + " " + w2[Math.floor(rndSeed() * w2.length)];
+    const serial = (effectiveDateKey).toString(16).slice(-6).toUpperCase();
+    p.textAlign = "left";
+    p.fillStyle = "rgba(240,232,218,.88)";
+    p.font = "italic 42px Newsreader, Georgia, serif";
+    p.fillText(binomial, 130, 1120);
+    p.fillStyle = "rgba(164,147,128,.82)";
+    p.font = "22px 'Space Mono', monospace";
+    p.fillText("bloomed " + todayStr().toUpperCase() + "  ·  60 seconds  ·  Nº " + serial, 130, 1175);
+    p.textAlign = "right";
+    p.fillStyle = "rgba(111,96,82,.8)";
+    p.font = "19px 'Space Mono', monospace";
+    p.fillText("PAGES THAT ARE PLACES", 1270, 1740);
+    pc.toBlob(b => {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+      a.download = "pressing-" + serial.toLowerCase() + ".png";
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }, "image/png");
+    toast("pressed — check your downloads");
+  };
+
+  /* gift link */
+  const doGift = async () => {
+    const lockData = getLock() || {};
+    const gAngle = lockData.gestAngle !== undefined ? lockData.gestAngle : 0;
+    const dateKey = effectiveDateKey;
+    const yr = Math.floor(dateKey / 10000), mo = Math.floor((dateKey % 10000) / 100), dy = dateKey % 100;
+    const gByte = Math.round(((gAngle / (Math.PI * 2)) + 1) % 1 * 255) & 0xff;
+    const salt = Math.floor(Math.random() * 65536);
+    const payload = b64u(new Uint8Array([1, (yr >> 8) & 0xff, yr & 0xff, mo & 0xff, dy & 0xff, gByte, (salt >> 8) & 0xff, salt & 0xff]));
+    const url = location.origin + location.pathname + "#p1" + payload;
+    const text = "someone sent you their flower — it only opens once, watch.";
+    if (navigator.share) {
+      try { await navigator.share({ title: "The Pressing", text, url }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try { await navigator.clipboard.writeText(url); toast("gift link copied — it opens once, for them"); }
+    catch (e) { location.hash = "p1" + payload; toast("link is in the address bar — copy it from there"); }
+  };
+
+  document.getElementById("keep").addEventListener("click", doKeepsake);
+  document.getElementById("gift").addEventListener("click", doGift);
+
+  /* threshold */
+  const th = document.getElementById("threshold");
+  const enter = async (sound) => {
+    if (state === "locked") return;
+    th.classList.add("gone"); started = true; t0 = performance.now();
+    state = "blooming"; soundedOpen = false;
+    if (isGift) markGiftUsed();
+    if (sound) { const on = await Garden.setOn(true); setSnd(on); }
+  };
+  document.getElementById("enter").addEventListener("click", () => enter(true));
+  document.getElementById("enterQuiet").addEventListener("click", () => enter(false));
+
+  const sbtn = document.getElementById("sound");
+  const setSnd = (on) => { sbtn.setAttribute("aria-pressed", String(on)); sbtn.textContent = on ? "garden on" : "garden off"; };
+  sbtn.addEventListener("click", async () => setSnd(await Garden.setOn(!Garden.isOn())));
+
+  if (WIN) { started = true; t0 = performance.now(); }
+
+  if (isGift && !giftAlreadyUsed && state !== "locked") {
+    const sub = document.getElementById("th-sub");
+    if (sub) sub.textContent = "someone sent you their flower — it only opens once, watch.";
+  }
+
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.getElementById("fin").classList.remove("show"); });
+})();
+</script>
+</body>
+</html>
