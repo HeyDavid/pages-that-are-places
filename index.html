@@ -158,8 +158,15 @@
   .glint{position:absolute;z-index:3;pointer-events:none;color:#dfe6ff;opacity:0;font-size:10px;line-height:1;
     text-shadow:0 0 8px rgba(184,200,255,.9);animation:glint var(--gdur,5s) ease-in-out infinite;animation-delay:var(--gdelay,0s)}
   @keyframes glint{0%,100%{opacity:0;transform:scale(.4) rotate(0deg)}50%{opacity:.9;transform:scale(1.1) rotate(45deg)}}
-  .exhibit.warping .frame{--fs:1.1;filter:brightness(1.6) saturate(1.2)}
-  .exhibit.warping .portal::before{opacity:1;filter:blur(26px)}
+  .exhibit.warping{z-index:60;position:relative}
+  .exhibit.warping .frame{--fs:2.3;filter:brightness(1.45) saturate(1.15);transition:transform .62s cubic-bezier(.3,.6,.2,1),filter .5s ease}
+  .exhibit.warping .portal::before{opacity:1;filter:blur(30px)}
+  .exhibit.warping .placard{opacity:0;transition:opacity .3s}
+  /* live world behind the glass (hover preview) */
+  .frame .preview{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;opacity:0;
+    transition:opacity .55s ease;background:#05060f;pointer-events:none}
+  .exhibit.peek .frame .preview{opacity:1}
+  .exhibit.peek .frame img{transition:opacity .55s ease;opacity:.25}
   .placard{margin:30px auto 0;max-width:60ch;text-align:center}
   .no{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--coral);letter-spacing:.06em;margin-right:10px}
   .title{font-family:var(--serif);font-weight:500;font-size:clamp(26px,3.4vw,34px);color:var(--cream);letter-spacing:-.01em}
@@ -168,16 +175,42 @@
   .enter{display:inline-block;font-family:var(--mono);font-size:13px;color:var(--coral);margin-top:18px}
   .enter .arw{display:inline-block;transition:transform .3s ease}
   .exhibit:hover .enter .arw{transform:translateX(6px)}
-  .next{border:1px dashed rgba(230,235,246,.16);border-radius:12px;padding:36px;text-align:center;color:var(--faint);
-    font-family:var(--mono);font-size:13px;letter-spacing:.04em;margin-bottom:clamp(80px,14vh,160px)}
-  .also{font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:.02em;margin:0 0 0}
-  .also a{color:var(--coral)}
+  /* the three unopened rooms */
+  .doors{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:clamp(80px,14vh,160px)}
+  .door{display:flex;flex-direction:column;gap:9px;border:1px dashed rgba(230,235,246,.16);border-radius:12px;padding:24px 20px;
+    font-family:var(--mono);transition:border-color .4s,background .4s}
+  .door:hover{border-color:rgba(107,120,255,.35);background:rgba(107,120,255,.03)}
+  .door .dno{font-size:12px;font-weight:700;color:var(--coral);letter-spacing:.06em}
+  .door .dnm{font-family:var(--serif);font-size:18.5px;color:var(--mist);font-style:italic;line-height:1.35}
+  .door .dst{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  @media (max-width:640px){.doors{grid-template-columns:1fr}}
+  /* the workshop door */
+  .ws{display:block;border:1px solid rgba(155,170,210,.18);border-radius:14px;padding:26px clamp(20px,4vw,32px);
+    background:
+      linear-gradient(rgba(110,130,190,.05) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(110,130,190,.05) 1px,transparent 1px),
+      rgba(10,14,24,.55);
+    background-size:34px 34px,34px 34px,auto;
+    transition:border-color .4s,box-shadow .4s,transform .35s cubic-bezier(.2,.7,.2,1)}
+  .ws:hover{border-color:rgba(107,120,255,.5);box-shadow:0 14px 44px rgba(0,0,0,.4);transform:translateY(-3px)}
+  .ws .wsk{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .ws .wst{display:block;font-family:var(--serif);font-size:clamp(24px,3.2vw,32px);color:var(--cream);letter-spacing:-.01em}
+  .ws .wst .arw{display:inline-block;color:var(--coral);transition:transform .3s}
+  .ws:hover .wst .arw{transform:translateX(6px)}
+  .ws .wsd{display:block;font-family:var(--mono);font-size:12px;color:var(--mist);margin-top:10px;line-height:1.8;max-width:62ch}
+  /* entrance plaque + the walk between rooms */
+  .plaque{margin-top:30px;max-width:62ch;border:1px solid rgba(230,235,246,.14);border-radius:12px;padding:18px 22px;background:rgba(14,18,32,.35)}
+  .plaque .pk{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--coral);margin-bottom:9px}
+  .plaque p{margin:0;font-size:14.5px;color:var(--mist);line-height:1.75;text-wrap:pretty}
+  .walk{margin:clamp(70px,11vh,130px) auto;max-width:44ch;text-align:center;font-family:var(--serif);font-style:italic;
+    font-size:clamp(17px,2vw,20px);color:var(--mist);line-height:1.7;text-wrap:balance}
+  .walk::before{content:"· · ·";display:block;font-family:var(--mono);font-style:normal;font-size:10px;letter-spacing:.6em;color:var(--faint);margin-bottom:18px}
   footer{margin-top:54px;padding-top:26px;border-top:1px solid rgba(230,235,246,.12);font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:.02em}
   footer a:hover{color:var(--coral)}
 
   @supports (animation-timeline: view()){
     @media (prefers-reduced-motion: no-preference){
-      .exhibit{opacity:.001;animation:rise both;animation-duration:1ms;animation-timeline:view();animation-range:entry 4% cover 34%}
+      .exhibit,.walk,.doors,.ws{opacity:.001;animation:rise both;animation-duration:1ms;animation-timeline:view();animation-range:entry 4% cover 34%}
       @keyframes rise{from{opacity:.001;transform:translateY(34px) scale(.985)}to{opacity:1;transform:none}}
     }
   }
@@ -277,43 +310,69 @@
     <p class="eyebrow">A showing &nbsp;<span class="dim">/ digital art through web design</span></p>
     <h1>Pages that are Places.</h1>
     <p class="statement">Most of the web is documents — pages that load fast, work everywhere, and get out of the way. That is the right shape for almost everything. But occasionally the right shape is a <em>place</em>: a scene you sit inside for a minute before you read what is there.</p>
-    <p class="statement">This is a room for the few pages that are places. Made by hand, in the browser. Scroll, and the room descends with you — from orbit, through the surface, into the deep. No funnel at the bottom.</p>
+    <p class="statement">This is a small museum of one long night — seven rooms, seven hours, each one a page that is a place. You arrive by falling. The sky celebrates. A fire reads you. The sea delivers. Your wandering becomes a country, a flower opens briefly, and before you leave, you look up.</p>
+    <div class="plaque">
+      <span class="pk">how the museum works</span>
+      <p>Walk down — the night deepens with you, orbit to abyss. Enter any open room and touch everything; nothing in here is fragile. Each room hands you something to take with you — a show, a poem, a sentence, a map, a sky — most of it small enough to live in a link, so you can pass it to someone else. Three rooms are open. Four are still being carved; you may hear it through the walls. Sound is optional. The lights stay low.</p>
+    </div>
+    <p class="statement" style="font-size:14px;margin-top:18px"><span style="font-family:var(--mono);font-size:12px;color:var(--faint)">Looking for the work itself? That door is <a href="workshop.html" style="color:var(--coral)">the Workshop →</a></span></p>
     <span class="cue">Scroll to descend <span class="arw">↓</span></span>
   </section>
+
+  <p class="walk">The first door is already open. Mind the drop — the floor of this room is ninety thousand feet down.</p>
 
   <a class="exhibit" href="deep.html" style="--haze:rgba(91,141,239,.36);--rim:rgba(91,141,239,.3);--fdur:9s;--fdelay:0s">
     <div class="portal"><div class="frame" style="view-transition-name:piece-01"><img src="assets/tile-deep.svg" alt="Going Deeper — a scene descending from space into the deep ocean" loading="lazy"></div></div>
     <div class="placard">
       <span class="no">№01</span><span class="title">Going Deeper</span>
-      <span class="medium">2026 · Canvas2D · scroll + interaction</span>
+      <span class="medium">the first hour — you arrive by falling &nbsp;·&nbsp; 2026 · Canvas2D · scroll + interaction</span>
       <span class="desc">Scroll from orbit, through atmosphere, down past the surface into the abyss. Click the asteroids to shatter them; click the kelp and tadpoles will come. A depth gauge keeps count. The piece this whole room is built from.</span>
       <span class="enter">Enter the piece <span class="arw">→</span></span>
     </div>
   </a>
 
-  <a class="exhibit" href="https://github.com/HeyDavid" target="_blank" rel="noopener" style="--haze:rgba(124,138,255,.32);--rim:rgba(124,138,255,.26);--fdur:11.5s;--fdelay:-3.5s">
-    <div class="portal"><div class="frame"><img src="assets/radar.svg" alt="Opportunity Radar — an animated sonar scope" loading="lazy"></div></div>
+  <p class="walk">You climb back out of the deep, hair somehow dry. Down the corridor a stall is glowing — shells, fuses, and one piñata nobody will explain.</p>
+
+  <a class="exhibit" href="fireworks.html" style="--haze:rgba(255,138,76,.30);--rim:rgba(255,138,76,.26);--fdur:10.5s;--fdelay:-4s">
+    <div class="portal"><div class="frame" style="view-transition-name:piece-02"><img src="assets/tile-fuse.svg" alt="Fuse — a drawn fuse line loops across the night sky toward a blooming firework" loading="lazy"></div></div>
     <div class="placard">
-      <span class="no">№02</span><span class="title">Opportunity Radar</span>
-      <span class="medium">2026 · animated SVG · hand-built</span>
-      <span class="desc">A sonar scope whose sweep locks onto a portfolio of live ventures, one at a time — range rings, bearing ticks, a phosphor afterglow. It lives at the top of my GitHub profile.</span>
-      <span class="enter">See it live <span class="arw">→</span></span>
+      <span class="no">№02</span><span class="title">Fuse</span>
+      <span class="medium">the second hour — the sky celebrates that you made it &nbsp;·&nbsp; 2026 · Canvas2D + WebAudio · a game</span>
+      <span class="desc">Pick a shell, draw a line anywhere on the sky — any shape — and let go. The rocket rides your line, shivering harder as the fuse runs out, then blooms: peony, willow, ring, strobe, a red-white-blue glory. The piñata bursts into tacos. Send the drone swarm, run the grand finale — then share your whole show as a single link, and whoever opens it can remix it.</span>
+      <span class="enter">Enter the piece <span class="arw">→</span></span>
     </div>
   </a>
 
-  <a class="exhibit" href="https://github.com/HeyDavid" target="_blank" rel="noopener" style="--haze:rgba(95,210,190,.3);--rim:rgba(95,210,190,.26);--fdur:10.5s;--fdelay:-6.5s">
-    <div class="portal"><div class="frame"><img src="assets/signal.svg" alt="Signal — an animated oscilloscope and tuner" loading="lazy"></div></div>
+  <p class="walk">Further down, the air turns salt. The fourth room has no floor — just sand, and a tide that keeps delivering.</p>
+
+  <a class="exhibit" href="driftmail.html" style="--haze:rgba(159,225,203,.28);--rim:rgba(159,225,203,.24);--fdur:12s;--fdelay:-7s">
+    <div class="portal"><div class="frame" style="view-transition-name:piece-04"><img src="assets/tile-drift.svg" alt="Driftmail — a corked bottle on a moonlit night beach" loading="lazy"></div></div>
     <div class="placard">
-      <span class="no">№03</span><span class="title">Signal</span>
-      <span class="medium">2026 · animated SVG · hand-built</span>
-      <span class="desc">An oscilloscope and a tuning dial, always transmitting, sweeping across the stations of a working portfolio. A quieter companion piece to the radar.</span>
-      <span class="enter">See it live <span class="arw">→</span></span>
+      <span class="no">№04</span><span class="title">Driftmail</span>
+      <span class="medium">the fourth hour — the sea starts delivering &nbsp;·&nbsp; 2026 · Canvas2D + WebAudio · a beach</span>
+      <span class="desc">A night beach with the moon's real phase in the sky. Write one sentence, cork it, and the tide carries it out — the whole letter lives inside the link you send. Open someone's link and their bottle washes ashore on your beach: uncork it, keep the letter as a pressing, or write one back. No server. No accounts. Just tide.</span>
+      <span class="enter">Walk down to the water <span class="arw">→</span></span>
     </div>
   </a>
 
-  <div class="next">№04 — a new piece is on the bench.</div>
+  <p class="walk">Past the beach the hall narrows, and now you can hear it — four doors, still being carved out of the dark.</p>
 
-  <p class="also">Also built &nbsp;—&nbsp; <a href="https://chatgpt.com/g/g-6a1f6404503881919e029eefcff83f07">AI Front Desk Architect</a> (a free GPT + Gemini Gem) &nbsp;·&nbsp; <a href="https://github.com/HeyDavid/animated-profile-radar">animated-profile-radar</a> (make your own)</p>
+  <div class="doors" aria-label="Four rooms still being carved">
+    <div class="door"><span class="dno">№03</span><span class="dnm">Ember — a poem that reads you back</span><span class="dst">the third hour — the fire gets curious about you · door being carved</span></div>
+    <div class="door"><span class="dno">№05</span><span class="dnm">The Cartographer — a country drawn by your wandering</span><span class="dst">the fifth hour — your steps become geography · door being carved</span></div>
+    <div class="door"><span class="dno">№06</span><span class="dnm">The Pressing — one flower, sixty seconds, once a day</span><span class="dst">the sixth hour — something opens, briefly · door being carved</span></div>
+    <div class="door"><span class="dno">№07</span><span class="dnm">That Night&rsquo;s Sky — the sky from a night that mattered</span><span class="dst">the last hour — before you leave, look up · door being carved</span></div>
+  </div>
+
+  <p class="walk">At the end of the hall there is one more doorway, lit differently. Warmer. The room where the museum gets made.</p>
+
+  <a class="ws" href="workshop.html">
+    <span class="wsk">the other door</span>
+    <span class="wst">The Workshop <span class="arw">→</span></span>
+    <span class="wsd">The working side of the bench — the radar and signal instruments, six production sites, open tools. Work shown as itself, no theater.</span>
+  </a>
+  <p class="walk">Dawn soon. Check your pockets.</p>
+
   <footer>Curated &amp; built by <a href="https://davidrussell.co">David Russell</a> &nbsp;·&nbsp; davidrussell.co &nbsp;·&nbsp; if you got here, you got the thing.</footer>
 </main>
 
@@ -861,6 +920,18 @@ const SolarWind = (() => {
         portal.style.setProperty("--rx",(-ny*6).toFixed(2)+"deg"); },{passive:true});
       ex.addEventListener("pointerleave",()=>{ portal.style.setProperty("--ry","0deg"); portal.style.setProperty("--rx","0deg"); });
     }
+    /* the window plays the actual world on hover (local pieces, fine pointers only) */
+    const href0=ex.getAttribute("href")||"";
+    if(fine&&!reduce&&!/^https?:/.test(href0)){
+      const frame=ex.querySelector(".frame"); let ifr=null, killT=0;
+      ex.addEventListener("pointerenter",()=>{ clearTimeout(killT);
+        if(!ifr){ ifr=document.createElement("iframe"); ifr.className="preview"; ifr.src=href0;
+          ifr.setAttribute("aria-hidden","true"); ifr.setAttribute("tabindex","-1"); ifr.setAttribute("scrolling","no");
+          ifr.title=""; frame.appendChild(ifr); }
+        ex.classList.add("peek"); });
+      ex.addEventListener("pointerleave",()=>{ ex.classList.remove("peek");
+        killT=setTimeout(()=>{ if(ifr){ ifr.remove(); ifr=null; } },4000); });
+    }
     ex.addEventListener("click",(e)=>{
       if(reduce||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button!==0) return;
       e.preventDefault();
@@ -868,7 +939,7 @@ const SolarWind = (() => {
       window.dispatchEvent(new CustomEvent("warp",{detail:{x:r.left+r.width/2, y:r.top+r.height/2}}));
       ex.classList.add("warping");
       const href=ex.getAttribute("href"), blank=ex.getAttribute("target")==="_blank";
-      setTimeout(()=>{ if(blank){ window.open(href,"_blank","noopener"); ex.classList.remove("warping"); } else { location.href=href; } }, 430);
+      setTimeout(()=>{ if(blank){ window.open(href,"_blank","noopener"); ex.classList.remove("warping"); } else { location.href=href; } }, 560);
     });
   });
 })();

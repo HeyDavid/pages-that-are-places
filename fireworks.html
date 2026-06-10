@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fuse — draw the path, light it · Pages that are Places</title>
+<meta name="description" content="A firework game: pick a shell, draw a fuse anywhere on the sky, and let go. The rocket follows your line, wobbles at the end, and blooms. Send the drone swarm, run the grand finale, share your whole show as a link — and one of the shells is a piñata.">
+<meta name="theme-color" content="#05060f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  @view-transition { navigation: auto; }
+  :root{
+    --wall:#0b0d13;--ink2:#0e1220;--cream:#ece9e0;--star:#e9edf6;--mist:#98a0b8;
+    --cobalt:#6b78ff;--signal:#5b8def;--coral:#ff6a3d;--spark:#ff8a4c;--faint:#6f79a0;--teal:#9fe1cb;
+    --serif:"Newsreader",Georgia,serif;--mono:"Space Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;overscroll-behavior:none}
+  body{background:linear-gradient(180deg,#05060f 0%,#0a1430 55%,#0c1838 86%,#0a1226 100%);
+    color:var(--cream);font-family:var(--mono);-webkit-font-smoothing:antialiased}
+  canvas{position:fixed;inset:0;width:100vw;height:100vh}
+  #sky{z-index:0}
+  #fx{z-index:1;touch-action:none;cursor:crosshair}
+  ::selection{background:rgba(107,120,255,.32)}
+
+  .chrome{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
+    gap:12px;padding:14px clamp(16px,4vw,30px);pointer-events:none}
+  .chrome>*{pointer-events:auto}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--mist);text-decoration:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;transition:color .3s}
+  .brand:hover{color:var(--cream)}
+  .brand .arw{color:var(--coral)}
+  .tools{display:flex;align-items:center;gap:10px}
+  .hud{display:flex;gap:16px;padding:8px 13px;background:rgba(14,18,32,.5);border:1px solid rgba(255,255,255,.07);
+    border-radius:11px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);font-size:11px;color:var(--mist)}
+  .hud .lbl{color:var(--faint)}
+  .hud .val{color:var(--star);font-variant-numeric:tabular-nums;margin-left:6px}
+  .hud .val.pop{animation:pop .4s cubic-bezier(.2,.7,.2,1)}
+  @keyframes pop{0%{transform:scale(1)}50%{color:var(--spark);transform:scale(1.3)}100%{transform:scale(1)}}
+  .sound{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 13px;cursor:pointer;
+    background:rgba(14,18,32,.5);border:1px solid rgba(255,255,255,.08);border-radius:11px;color:var(--mist);
+    font-family:var(--mono);font-size:11px;letter-spacing:.04em;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);transition:color .3s,border-color .3s}
+  .sound:hover{color:var(--cream);border-color:rgba(107,120,255,.4)}
+  .sound[aria-pressed="true"]{color:var(--signal);border-color:rgba(91,141,239,.5)}
+
+  .hint{position:fixed;left:50%;top:38%;transform:translateX(-50%);z-index:5;text-align:center;pointer-events:none;
+    transition:opacity 1s ease;max-width:34ch}
+  .hint h1{font-family:var(--serif);font-weight:400;font-size:clamp(34px,5.4vw,54px);letter-spacing:-.02em;margin:0 0 14px;color:#f4f1e8;view-transition-name:piece-02}
+  .hint p{font-size:12.5px;letter-spacing:.06em;color:var(--mist);line-height:1.8;margin:0}
+  .hint .k{color:var(--coral)}
+  body.lit .hint{opacity:0}
+
+  .dock{position:fixed;left:50%;bottom:clamp(14px,3vh,28px);transform:translateX(-50%);z-index:10;
+    display:flex;gap:7px;padding:9px;background:rgba(9,12,22,.72);border:1px solid rgba(255,255,255,.09);border-radius:16px;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 16px 44px rgba(0,0,0,.45);max-width:calc(100vw - 20px)}
+  .shell{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:74px;padding:9px 8px 8px;cursor:pointer;
+    background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:11px;color:var(--mist);
+    font-family:var(--mono);font-size:10px;letter-spacing:.05em;transition:color .25s,border-color .3s,background .3s,box-shadow .3s,transform .2s}
+  .shell:hover{color:var(--cream);border-color:rgba(107,120,255,.45);transform:translateY(-2px)}
+  .shell .dot{width:14px;height:14px;border-radius:50%;background:var(--c,#ffce7a);box-shadow:0 0 10px var(--c,#ffce7a)}
+  .shell .em{font-size:15px;line-height:14px;filter:drop-shadow(0 0 6px rgba(255,255,255,.35))}
+  .shell[aria-pressed="true"]{color:var(--star);background:rgba(91,141,239,.14);border-color:rgba(91,141,239,.6);box-shadow:0 0 14px rgba(91,141,239,.25)}
+  .shell .dot.tri{background:linear-gradient(135deg,#ff5a5a 0 33%,#f5f8ff 33% 66%,#6b8cff 66% 100%);box-shadow:0 0 10px rgba(255,120,120,.7)}
+  .dsep{width:1px;align-self:stretch;background:rgba(255,255,255,.12);margin:2px 3px}
+  .shell.busy{opacity:.45;pointer-events:none}
+  #toast{position:fixed;left:50%;bottom:104px;transform:translateX(-50%) translateY(8px);z-index:30;padding:10px 16px;
+    background:rgba(9,12,22,.92);border:1px solid rgba(107,120,255,.4);border-radius:11px;font-size:11.5px;color:var(--star);
+    letter-spacing:.03em;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:86vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%)}
+  .arrive{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:rgba(4,6,14,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);text-align:center;padding:24px}
+  .arrive .ttl{font-family:var(--serif);font-size:clamp(30px,5vw,46px);color:#f4f1e8;letter-spacing:-.01em;max-width:18ch}
+  .arrive .sb{font-size:11.5px;color:var(--mist);letter-spacing:.08em;max-width:42ch;line-height:1.8}
+  .arrive .go{margin-top:8px;padding:13px 30px;font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+    color:#0b0d13;background:var(--spark);border:none;border-radius:12px;box-shadow:0 0 30px rgba(255,138,76,.45);transition:background .3s,transform .2s}
+  .arrive .go:hover{background:#ffa36b;transform:translateY(-1px)}
+  .arrive .after{font-size:10.5px;color:var(--faint);letter-spacing:.1em}
+  @media (max-width:560px){
+    .shell{min-width:56px;padding:8px 5px 7px}
+    .shell .nm{display:none}
+    .brand .txt{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){ .hint{transition:none} .hud .val.pop{animation:none} }
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<canvas id="fx" aria-label="Firework sky — draw a fuse with your pointer, release to launch"></canvas>
+
+<div class="chrome">
+  <a class="brand" href="index.html"><span class="arw">←</span><span class="txt">the rooms</span></a>
+  <div class="tools">
+    <div class="hud" aria-live="polite"><span><span class="lbl">shells</span><span class="val" id="hud-shells">0</span></span></div>
+    <button class="sound" id="share" type="button" aria-label="Share your show as a link">share show</button>
+    <button class="sound" id="sound" type="button" aria-pressed="false" aria-label="Toggle sound">sound off</button>
+  </div>
+</div>
+
+<div class="hint" id="hint">
+  <h1>Fuse.</h1>
+  <p>pick a shell below &nbsp;·&nbsp; <span class="k">draw a line anywhere</span> — any shape, any direction &nbsp;·&nbsp; let go to light it &nbsp;·&nbsp; or send the <span class="k">drones</span>, or run the <span class="k">finale</span></p>
+</div>
+
+<div class="dock" id="dock" role="group" aria-label="Pick a firework shell">
+  <button class="shell" data-type="peony" aria-pressed="true" style="--c:#ffce7a"><span class="dot"></span><span class="nm">peony</span></button>
+  <button class="shell" data-type="willow" aria-pressed="false" style="--c:#ffd9a0"><span class="dot"></span><span class="nm">willow</span></button>
+  <button class="shell" data-type="ring" aria-pressed="false" style="--c:#9fe1cb"><span class="dot"></span><span class="nm">ring</span></button>
+  <button class="shell" data-type="strobe" aria-pressed="false" style="--c:#eef2ff"><span class="dot"></span><span class="nm">strobe</span></button>
+  <button class="shell" data-type="glory" aria-pressed="false" style="--c:#ff5a5a"><span class="dot tri"></span><span class="nm">glory</span></button>
+  <button class="shell" data-type="pinata" aria-pressed="false"><span class="em">🪅</span><span class="nm">piñata</span></button>
+  <span class="dsep" aria-hidden="true"></span>
+  <button class="shell" id="btn-drones" aria-pressed="false"><span class="em">🛸</span><span class="nm">drones</span></button>
+  <button class="shell" id="btn-finale" aria-pressed="false"><span class="em">🎆</span><span class="nm">finale</span></button>
+</div>
+
+<script>
+/* ============================================================
+   FUSE — №02 of Pages that are Places.
+   Pick a shell. Draw a fuse with the pointer — the line IS the
+   flight path. On release a rocket rides it, wobbling harder as
+   the fuse runs out, then blooms: peony, willow, ring, strobe…
+   or a piñata that bursts into tacos. Sound is generative,
+   opt-in WebAudio. Canvas2D, one file, no dependencies.
+   ============================================================ */
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- sky: stars + skyline, painted once ---------- */
+(() => {
+  const c = document.getElementById("sky"), x = c.getContext("2d");
+  const paint = () => {
+    const dpr = Math.min(devicePixelRatio || 1, 2), W = innerWidth, H = innerHeight;
+    c.width = W * dpr; c.height = H * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    x.clearRect(0, 0, W, H);
+    let s = 20260610;
+    const rnd = () => { s |= 0; s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    for (let i = 0; i < 170; i++) {
+      const px = rnd() * W, py = Math.pow(rnd(), 1.4) * H * .9, r = .3 + Math.pow(rnd(), 4) * 1.7, a = .15 + rnd() * .5;
+      x.fillStyle = `rgba(233,237,246,${a})`; x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill();
+    }
+    /* low ground silhouette — dunes + a few palms, South Florida night */
+    const gy = H - 34;
+    x.fillStyle = "rgba(3,5,12,.92)";
+    x.beginPath(); x.moveTo(0, H);
+    for (let px = 0; px <= W; px += 12) x.lineTo(px, gy + Math.sin(px * .008) * 5 + Math.sin(px * .0021) * 7);
+    x.lineTo(W, H); x.closePath(); x.fill();
+    const palm = (bx, sc) => {
+      const by = gy + Math.sin(bx * .008) * 5 + Math.sin(bx * .0021) * 7;
+      x.strokeStyle = "rgba(3,5,12,.95)"; x.lineWidth = 3 * sc; x.lineCap = "round";
+      x.beginPath(); x.moveTo(bx, by); x.quadraticCurveTo(bx + 6 * sc, by - 18 * sc, bx + 9 * sc, by - 30 * sc); x.stroke();
+      x.lineWidth = 2 * sc;
+      for (let f = 0; f < 5; f++) { const a = -.4 - f * .55; x.beginPath(); x.moveTo(bx + 9 * sc, by - 30 * sc); x.quadraticCurveTo(bx + 9 * sc + Math.cos(a) * 16 * sc, by - 30 * sc + Math.sin(a) * 10 * sc - 4, bx + 9 * sc + Math.cos(a) * 24 * sc, by - 30 * sc + Math.sin(a) * 16 * sc + 3); x.stroke(); }
+    };
+    palm(W * .12, 1); palm(W * .16, .7); palm(W * .87, .9);
+  };
+  paint(); addEventListener("resize", paint, { passive: true });
+})();
+
+/* ---------- audio: generative, opt-in ---------- */
+const FX = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx, master, on = false, ckBuf = null;
+  const ensure = () => { if (ctx) return;
+    ctx = new AC(); const comp = ctx.createDynamicsCompressor();
+    master = ctx.createGain(); master.gain.value = .55; master.connect(comp); comp.connect(ctx.destination); };
+  const noiseBuf = (dur, fn) => { const b = ctx.createBuffer(1, (ctx.sampleRate * dur) | 0, ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = fn(i / d.length, i); return b; };
+  const boom = (size, hz) => { if (!on) return; const t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(hz, t); o.frequency.exponentialRampToValueAtTime(Math.max(24, hz * .4), t + .5);
+    const og = ctx.createGain(); og.gain.setValueAtTime(.7 * size, t); og.gain.exponentialRampToValueAtTime(.001, t + .8 + size * .4);
+    o.connect(og); og.connect(master); o.start(t); o.stop(t + 1.4);
+    const n = ctx.createBufferSource(); n.buffer = noiseBuf(.9, p => (Math.random() * 2 - 1) * Math.pow(1 - p, 2));
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(900 * size + 300, t); lp.frequency.exponentialRampToValueAtTime(120, t + .8);
+    const ng = ctx.createGain(); ng.gain.setValueAtTime(.5 * size, t); ng.gain.exponentialRampToValueAtTime(.001, t + .9);
+    n.connect(lp); lp.connect(ng); ng.connect(master); n.start(t); };
+  const shimmer = () => { if (!on) return; const t = ctx.currentTime;
+    const n = ctx.createBufferSource(); n.buffer = noiseBuf(2.4, p => (Math.random() * 2 - 1) * Math.pow(1 - p, 1.4) * .8);
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3200;
+    const g = ctx.createGain(); g.gain.setValueAtTime(.16, t); g.gain.exponentialRampToValueAtTime(.001, t + 2.3);
+    n.connect(hp); hp.connect(g); g.connect(master); n.start(t); };
+  const chime = () => { if (!on) return; const t = ctx.currentTime;
+    [523.25, 659.25, 783.99].forEach((f, i) => { const o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = f * (1 + (Math.random() - .5) * .004);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.14 - i * .03, t + .02 + i * .06); g.gain.exponentialRampToValueAtTime(.001, t + 1.5);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + 1.6); }); };
+  const crackle = (gain) => { if (!on) return; const t = ctx.currentTime;
+    const b = ctx.createBuffer(1, (ctx.sampleRate * .6) | 0, ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) { const p = i / d.length;
+      if (Math.random() < .012 * (1 - p)) { const amp = (.4 + Math.random() * .6) * (1 - p), w = 2 + (Math.random() * 6 | 0);
+        for (let j = 0; j < w && i + j < d.length; j++) d[i + j] += (Math.random() * 2 - 1) * amp * (1 - j / w); } }
+    const src = ctx.createBufferSource(); src.buffer = b; src.playbackRate.value = .9 + Math.random() * .3;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600 + Math.random() * 1400; bp.Q.value = .7;
+    const g = ctx.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.001, t + .65);
+    src.connect(bp); bp.connect(g); g.connect(master); src.start(t); };
+  const party = () => { if (!on) return; const t = ctx.currentTime;     /* slide whistle up + splat + crackle = piñata */
+    const o = ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(380, t); o.frequency.exponentialRampToValueAtTime(980, t + .28); o.frequency.exponentialRampToValueAtTime(300, t + .5);
+    const g = ctx.createGain(); g.gain.setValueAtTime(.16, t); g.gain.exponentialRampToValueAtTime(.001, t + .55);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + .6);
+    setTimeout(() => { boom(.5, 90); crackle(.22); }, 120); };
+  const whoosh = () => { if (!on) return null; const t = ctx.currentTime;
+    const n = ctx.createBufferSource(); n.buffer = noiseBuf(3, () => Math.random() * 2 - 1); n.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 600; bp.Q.value = 1.6;
+    const g = ctx.createGain(); g.gain.value = .0001; n.connect(bp); bp.connect(g); g.connect(master); n.start(t);
+    return { set(speed, s) { const tt = ctx.currentTime; g.gain.setTargetAtTime(Math.min(.12, speed * .012), tt, .05); bp.frequency.setTargetAtTime(500 + s * 1400, tt, .07); },
+      stop() { const tt = ctx.currentTime; g.gain.setTargetAtTime(.0001, tt, .06); n.stop(tt + .4); } }; };
+  const hum = () => { if (!on) return null; const t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = 62;
+    const o2 = ctx.createOscillator(); o2.type = "sawtooth"; o2.frequency.value = 62.7;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 230;
+    const g = ctx.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.setTargetAtTime(.045, t, 1.2);
+    o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(master); o.start(t); o2.start(t);
+    return { stop() { const tt = ctx.currentTime; g.gain.setTargetAtTime(.0001, tt, .5); o.stop(tt + 2.2); o2.stop(tt + 2.2); } }; };
+  const toggle = async () => { ensure(); if (ctx.state === "suspended") await ctx.resume(); on = !on; return on; };
+  return { toggle, isOn: () => on, boom, shimmer, chime, crackle, party, whoosh, hum };
+})();
+
+/* ---------- the game ---------- */
+(() => {
+  const c = document.getElementById("fx"), x = c.getContext("2d", { alpha: true });
+  let W = 0, H = 0, dpr = 1;
+  const resize = () => { dpr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; c.width = W * dpr; c.height = H * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  resize(); addEventListener("resize", resize, { passive: true });
+
+  const TYPES = {
+    peony:  { cols: [[255,225,160],[255,170,90],[255,110,70],[255,80,110]], n: 130, v: 7.6, grav: .052, drag: .985, life: .010, size: 2.4, wob: 10,
+              snd: () => { FX.boom(1, 60); } },
+    willow: { cols: [[255,222,150],[255,200,110],[230,170,90]], n: 90, v: 5.4, grav: .028, drag: .968, life: .005, size: 2.0, wob: 8,
+              snd: () => { FX.boom(.8, 52); FX.shimmer(); } },
+    ring:   { cols: [[159,225,203],[120,200,240],[180,240,255]], n: 72, v: 6.4, grav: .016, drag: .982, life: .009, size: 2.1, wob: 7, ring: true,
+              snd: () => { FX.boom(.45, 110); FX.chime(); } },
+    strobe: { cols: [[245,248,255],[220,228,255]], n: 64, v: 6.8, grav: .045, drag: .982, life: .011, size: 2.2, wob: 12, strobe: true,
+              snd: () => { FX.boom(.6, 80); FX.crackle(.26); setTimeout(() => FX.crackle(.18), 260); } },
+    pinata: { cols: [[255,120,160],[120,220,160],[255,210,90],[120,170,255]], n: 60, v: 5.6, grav: .05, drag: .985, life: .010, size: 2.0, wob: 14, taco: true,
+              snd: () => { FX.party(); } },
+    glory:  { cols: [[255,90,90],[245,248,255],[110,140,255]], n: 144, v: 8.4, grav: .05, drag: .985, life: .009, size: 2.4, wob: 11, bands: true,
+              snd: () => { FX.boom(1.15, 50); setTimeout(() => FX.crackle(.2), 280); setTimeout(() => FX.crackle(.14), 520); } },
+  };
+  let type = "peony", shells = 0;
+  const rockets = [], sparks = [], tacos = [], confetti = [], flashes = [], strobes = [];
+  const MAXS = 900;
+
+  /* path capture */
+  let drawing = false, path = [], pid = null;
+  const ui = (t) => t.closest && t.closest(".dock,.chrome,.arrive,#toast");
+  const fxdown = (e) => { if (ui(e.target)) return; drawing = true; pid = e.pointerId; path = [{ x: e.clientX, y: e.clientY }];
+    document.body.classList.add("lit"); };
+  const fxmove = (e) => { if (!drawing || e.pointerId !== pid) return; const p = path[path.length - 1], nx = e.clientX, ny = e.clientY;
+    if (Math.hypot(nx - p.x, ny - p.y) > 4) path.push({ x: nx, y: ny }); };
+  const fxup = (e) => { if (!drawing || e.pointerId !== pid) return; drawing = false; launch(path); path = []; };
+  addEventListener("pointerdown", fxdown, { passive: true });
+  addEventListener("pointermove", fxmove, { passive: true });
+  addEventListener("pointerup", fxup, { passive: true });
+  addEventListener("pointercancel", () => { drawing = false; path = []; }, { passive: true });
+
+  /* resample a drawn path to even spacing; short tap → arc up from the ground */
+  const buildPath = (pts) => {
+    let len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y);
+    if (len < 40) { const tx2 = pts[0].x, ty2 = pts[0].y, bx = W * .5, by = H - 30, mx = (bx + tx2) / 2 + (tx2 < bx ? -60 : 60);
+      const o = []; for (let i = 0; i <= 40; i++) { const t = i / 40, u = 1 - t;
+        o.push({ x: u*u*bx + 2*u*t*mx + t*t*tx2, y: u*u*by + 2*u*t*(Math.min(by, ty2) - 120) + t*t*ty2 }); }
+      pts = o; len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y); }
+    const seg = 6, out = [pts[0]]; let acc = 0;
+    for (let i = 1; i < pts.length; i++) { let dx = pts[i].x - pts[i-1].x, dy = pts[i].y - pts[i-1].y, d = Math.hypot(dx, dy);
+      while (acc + d >= seg) { const t = (seg - acc) / d; const lx = pts[i-1].x + dx * t, ly = pts[i-1].y + dy * t;
+        out.push({ x: lx, y: ly }); pts[i-1] = { x: lx, y: ly }; dx = pts[i].x - lx; dy = pts[i].y - ly; d = Math.hypot(dx, dy); acc = 0; }
+      acc += d; }
+    out.push(pts[pts.length - 1]); return { pts: out, len };
+  };
+
+  /* ---------- firing core + recorder (everything fired is recorded, so shows can be shared & remixed) ---------- */
+  const TYPELIST = ["peony", "willow", "ring", "strobe", "pinata", "glory"];
+  const recorded = [];
+  const norm10 = (pts) => { const n = Math.min(10, pts.length), out = [];
+    for (let i = 0; i < n; i++) { const p = pts[Math.round((i / Math.max(1, n - 1)) * (pts.length - 1))];
+      out.push([Math.max(0, Math.min(1, p.x / W)), Math.max(0, Math.min(1, p.y / H))]); } return out; };
+  const fire = (raw, tn) => { if (!raw || raw.length < 1) return;
+    const { pts, len } = buildPath(raw); if (pts.length < 3) return;
+    const T = TYPES[tn]; if (!T) return;
+    rockets.push({ pts, len, T, i: 0, f: 0, speed: Math.max(2.2, Math.min(6, len / 110)), accel: .045,
+      phase: Math.random() * Math.PI * 2, wh: FX.whoosh(), em: T.taco ? "🪅" : null, swing: 0 });
+    recorded.push({ t: performance.now(), type: tn, pts: norm10(pts) });
+    if (recorded.length > 40) recorded.shift();
+    shells++; const el = document.getElementById("hud-shells");
+    el.textContent = shells; el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+  };
+  const launch = (raw) => fire(raw, type);
+
+  /* ---------- share codec: the whole show lives in the link (v1, base64url, no backend) ---------- */
+  const b64u = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const unb64u = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); const bin = atob(s);
+    const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+  const encodeShow = () => { if (!recorded.length) return null;
+    const bytes = []; let last = recorded[0].t;
+    for (const r of recorded) { const dt = Math.max(0, Math.min(255, Math.round((r.t - last) / 200))); last = r.t;
+      bytes.push(dt, Math.max(0, TYPELIST.indexOf(r.type)), r.pts.length);
+      for (const [nx, ny] of r.pts) bytes.push(Math.round(nx * 255), Math.round(ny * 255)); }
+    return b64u(new Uint8Array(bytes)); };
+  const decodeShow = (s) => { try { const u = unb64u(s), out = []; let i = 0, at = 0;
+      while (i + 3 <= u.length) { at += u[i] * 200; const tn = TYPELIST[u[i + 1]], n = u[i + 2]; i += 3;
+        if (!tn || n < 2 || n > 10 || i + n * 2 > u.length) return null;
+        const pts = []; for (let k = 0; k < n; k++) { pts.push([u[i] / 255, u[i + 1] / 255]); i += 2; }
+        out.push({ at, type: tn, pts }); }
+      return out.length ? out : null; } catch (e) { return null; } };
+  const denorm = (pts) => pts.map(([nx, ny]) => ({ x: nx * W, y: ny * H }));
+  const showQ = [];
+  const playShow = (items) => { const base = performance.now() + 600;
+    for (const it of items) showQ.push({ at: base + it.at, type: it.type, pts: it.pts });
+    const fb = document.getElementById("btn-finale"); fb && fb.classList.add("busy"); };
+
+  const toast = (msg) => { let t = document.getElementById("toast");
+    if (!t) { t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
+    t.textContent = msg; t.classList.add("show"); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove("show"), 2800); };
+
+  /* ---------- the grand finale (scripted, red-white-blue heavy) ---------- */
+  const FINALE = [
+    [0,"peony",.5,.30],[900,"willow",.28,.34],[1800,"ring",.72,.32],[2800,"glory",.5,.26],
+    [3600,"peony",.24,.3],[3850,"peony",.76,.3],[4800,"strobe",.5,.36],
+    [5600,"willow",.2,.4],[5800,"willow",.8,.4],[6800,"glory",.35,.24],[7100,"glory",.65,.24],
+    [8200,"ring",.5,.2],[8900,"pinata",.5,.44],[9800,"strobe",.3,.28],[10000,"strobe",.7,.28],
+    [11000,"glory",.5,.18],[11800,"peony",.14,.34],[11950,"peony",.86,.34],[12100,"willow",.5,.28],
+    [13000,"glory",.3,.23],[13150,"glory",.7,.23],[13300,"glory",.5,.16],
+    [14000,"strobe",.24,.26],[14150,"strobe",.76,.26],[14300,"ring",.5,.28],
+    [15000,"glory",.18,.28],[15140,"glory",.4,.2],[15280,"glory",.6,.2],[15420,"glory",.82,.28],
+  ];
+  const showPath = (apexX, apexY) => { const sx = (apexX + (Math.random() - .5) * .12) * W, sy = H - 22,
+      ax = apexX * W, ay = apexY * H, mx = (sx + ax) / 2 + (ax - sx) * .2, my = (sy + ay) / 2 - H * .07, pts = [];
+    for (let i = 0; i <= 30; i++) { const t = i / 30, u = 1 - t; pts.push({ x: u*u*sx + 2*u*t*mx + t*t*ax, y: u*u*sy + 2*u*t*my + t*t*ay }); }
+    return pts; };
+  const runFinale = () => { if (showQ.length) return; document.body.classList.add("lit");
+    const base = performance.now() + 400;
+    for (const [at, tn, ax, ay] of FINALE) showQ.push({ at: base + at, type: tn, raw: showPath.bind(null, ax, ay) });
+    document.getElementById("btn-finale").classList.add("busy"); };
+
+  /* ---------- drone swarm: rises from the ground, forms a star, the flag, JULY 4 — then lands ---------- */
+  const Drones = (() => {
+    let list = [], mode = "idle", si = 0, nextAt = 0, humH = null, shapes = null;
+    const sample = (draw) => { const oc = document.createElement("canvas"); oc.width = 360; oc.height = 200;
+      const o = oc.getContext("2d", { willReadFrequently: true }); draw(o, 360, 200);
+      const d = o.getImageData(0, 0, 360, 200).data, pts = [];
+      for (let y = 2; y < 200; y += 6) for (let xx = 2; xx < 360; xx += 6) { const k = (y * 360 + xx) * 4;
+        if (d[k + 3] > 140) pts.push({ x: xx / 360, y: y / 200, c: [d[k], d[k + 1], d[k + 2]] }); }
+      if (pts.length > 230) { const out = [], st = pts.length / 230; for (let i = 0; i < 230; i++) out.push(pts[(i * st) | 0]); return out; }
+      return pts; };
+    const buildShapes = () => {
+      const star = (o, w, h) => { o.fillStyle = "#ffd24a"; o.beginPath(); const cx2 = w / 2, cy2 = h / 2 + 6;
+        for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 34 : 86;
+          const px = cx2 + Math.cos(a) * r, py = cy2 + Math.sin(a) * r * .92; i ? o.lineTo(px, py) : o.moveTo(px, py); }
+        o.closePath(); o.fill(); };
+      const flag = (o, w, h) => { const fw = 300, fh = 160, x0 = (w - fw) / 2, y0 = (h - fh) / 2;
+        for (let i = 0; i < 13; i++) { o.fillStyle = i % 2 ? "#f5f8ff" : "#ff5a5a"; o.fillRect(x0, y0 + i * (fh / 13), fw, fh / 13 + 1); }
+        o.fillStyle = "#5b78ff"; o.fillRect(x0, y0, fw * .42, fh * 7 / 13); };
+      const text = (o, w, h) => { o.fillStyle = "#f5f8ff"; o.font = "900 84px system-ui,sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; o.fillText("JULY 4", w / 2, h / 2); };
+      shapes = [sample(star), sample(flag), sample(text)];
+    };
+    const target = (d, p) => { d.tx = (0.16 + p.x * .68) * W; d.ty = (0.08 + p.y * .46) * H; d.c = p.c; };
+    const start = () => { if (mode !== "idle") return; if (!shapes) buildShapes();
+      const pts = shapes[0], N = Math.min(230, Math.max(80, pts.length));
+      list = []; for (let i = 0; i < N; i++) { const d = { x: Math.random() * W, y: H - 24 - Math.random() * 8, ph: Math.random() * Math.PI * 2 };
+        target(d, pts[i % pts.length]); list.push(d); }
+      mode = "fly"; si = 0; nextAt = performance.now() + 8000; humH = FX.hum();
+      document.getElementById("btn-drones").classList.add("busy"); document.body.classList.add("lit"); };
+    const step = (x, now) => { if (mode === "idle") return;
+      if (now > nextAt) {
+        if (mode === "land") { list = []; mode = "idle"; if (humH) { humH.stop(); humH = null; }
+          document.getElementById("btn-drones").classList.remove("busy"); return; }
+        si++;
+        if (si >= shapes.length) { mode = "land"; list.forEach(d => { d.tx = d.x; d.ty = H + 40; }); nextAt = now + 4200; }
+        else { list.forEach((d, i) => target(d, shapes[si][i % shapes[si].length])); nextAt = now + 8000; } }
+      x.save(); x.globalCompositeOperation = "lighter";
+      for (const d of list) { d.x += (d.tx - d.x) * .045; d.y += (d.ty - d.y) * .045;
+        const hx = d.x + Math.sin(now * .0021 + d.ph) * 1.6, hy = d.y + Math.cos(now * .0017 + d.ph) * 1.4;
+        const cc = d.c || [245, 248, 255];
+        x.fillStyle = `rgba(${cc[0]},${cc[1]},${cc[2]},.16)`; x.beginPath(); x.arc(hx, hy, 4.6, 0, Math.PI * 2); x.fill();
+        x.fillStyle = `rgba(${cc[0]},${cc[1]},${cc[2]},.95)`; x.beginPath(); x.arc(hx, hy, 1.7, 0, Math.PI * 2); x.fill();
+        if (((now / 500 + d.ph * 10) % 11) < .25) { x.fillStyle = "rgba(255,255,255,.9)"; x.beginPath(); x.arc(hx, hy, 2.6, 0, Math.PI * 2); x.fill(); } }
+      x.restore(); };
+    return { start, step };
+  })();
+
+  const addSpark = (x0, y0, vx, vy, col, o) => { if (sparks.length >= MAXS) sparks.shift(); o = o || {};
+    sparks.push({ x: x0, y: y0, vx, vy, col, life: 1, decay: o.decay || .02, sz: o.sz || 1.6, grav: o.grav ?? .05, drag: o.drag ?? .985, trail: o.trail || 2.2 }); };
+
+  const explode = (r, ex, ey) => {
+    const T = r.T, n = reduce ? (T.n >> 1) : T.n;
+    flashes.push({ x: ex, y: ey, r: 18 + T.v * 2, life: 1, decay: .08 });
+    T.snd();
+    if (T.taco) {
+      const NT = reduce ? 12 : 22;
+      for (let i = 0; i < NT; i++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 5;
+        tacos.push({ x: ex, y: ey, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 2.4, rot: Math.random() * Math.PI * 2, vr: (Math.random() - .5) * .3, life: 1, rest: 0 }); }
+      const NC = reduce ? 30 : 70;
+      for (let i = 0; i < NC; i++) { const a = Math.random() * Math.PI * 2, v = 1 + Math.random() * 5, col = T.cols[i % T.cols.length];
+        confetti.push({ x: ex, y: ey, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, w: 3 + Math.random() * 4, h: 5 + Math.random() * 5,
+          rot: Math.random() * Math.PI * 2, vr: (Math.random() - .5) * .4, col, life: 1, decay: .006 + Math.random() * .006, fl: Math.random() * Math.PI * 2 }); }
+      return;
+    }
+    for (let i = 0; i < n; i++) {
+      let a, v, col;
+      if (T.ring) { a = (i / n) * Math.PI * 2; v = T.v * (.92 + Math.random() * .16); }
+      else { a = Math.random() * Math.PI * 2; v = T.v * Math.pow(Math.random(), .42); }
+      if (T.bands) { const band = i % 3; v = T.v * [1, .72, .45][band] * (.88 + Math.random() * .22); col = T.cols[band]; }
+      else col = T.cols[(Math.random() * T.cols.length) | 0];
+      addSpark(ex, ey, Math.cos(a) * v, Math.sin(a) * v, col,
+        { decay: T.life * (0.7 + Math.random() * .7), sz: T.size * (.6 + Math.random() * .8), grav: T.grav, drag: T.drag, trail: T.ring ? 1.6 : 2.6 });
+      if (T.strobe && Math.random() < .3) strobes.push({ x: ex + Math.cos(a) * v * 9, y: ey + Math.sin(a) * v * 9, at: perfNow + 200 + Math.random() * 700 });
+    }
+  };
+
+  let perfNow = performance.now();
+  const step = (now) => {
+    perfNow = now;
+    x.clearRect(0, 0, W, H);
+
+    /* shells due from a running show (finale or a shared link) */
+    while (showQ.length && now >= showQ[0].at) { const it = showQ.shift();
+      fire(it.raw ? it.raw() : denorm(it.pts), it.type);
+      if (!showQ.length) { const fb = document.getElementById("btn-finale"); if (fb) fb.classList.remove("busy"); } }
+
+    Drones.step(x, now);
+
+    /* live fuse being drawn */
+    if (drawing && path.length > 1) {
+      x.save(); x.setLineDash([2, 7]); x.lineWidth = 1.4; x.strokeStyle = "rgba(107,120,255,.75)";
+      x.shadowColor = "rgba(107,120,255,.8)"; x.shadowBlur = 7;
+      x.beginPath(); x.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) x.lineTo(path[i].x, path[i].y);
+      x.stroke(); x.restore();
+      const tip = path[path.length - 1];
+      x.fillStyle = "rgba(236,233,224,.9)"; x.beginPath(); x.arc(tip.x, tip.y, 2.4, 0, Math.PI * 2); x.fill();
+    }
+
+    /* rockets riding their fuses */
+    for (let ri = rockets.length - 1; ri >= 0; ri--) {
+      const r = rockets[ri], P = r.pts, N = P.length - 1;
+      r.speed += r.accel; r.f += r.speed; const idx = Math.min(N, r.f / 6);
+      r.i = idx; const i0 = idx | 0, ft = idx - i0, p0 = P[i0], p1 = P[Math.min(N, i0 + 1)];
+      const s = idx / N;
+      const dx = p1.x - p0.x, dy = p1.y - p0.y, dlen = Math.hypot(dx, dy) || 1;
+      /* end-of-fuse wobble: lateral oscillation that grows over the last third */
+      const wAmp = r.T.wob * Math.max(0, (s - .62) / .38), wob = Math.sin(s * r.len * .09 + r.phase) * wAmp;
+      const px2 = p0.x + dx * ft + (-dy / dlen) * wob, py2 = p0.y + dy * ft + (dx / dlen) * wob;
+      if (r.wh) r.wh.set(r.speed, s);
+      /* remaining fuse, faint */
+      x.save(); x.setLineDash([2, 7]); x.lineWidth = 1; x.strokeStyle = "rgba(107,120,255,.18)";
+      x.beginPath(); x.moveTo(px2, py2);
+      for (let i = i0 + 1; i <= N; i += 2) x.lineTo(P[i].x, P[i].y);
+      x.stroke(); x.restore();
+      /* head */
+      if (r.em) { r.swing += .25; x.save(); x.translate(px2, py2); x.rotate(Math.sin(r.swing) * .35); x.font = "26px serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(r.em, 0, 0); x.restore(); }
+      else { x.save(); x.globalCompositeOperation = "lighter";
+        const g = x.createRadialGradient(px2, py2, 0, px2, py2, 9);
+        g.addColorStop(0, "rgba(255,250,235,.95)"); g.addColorStop(1, "rgba(255,170,90,0)");
+        x.fillStyle = g; x.beginPath(); x.arc(px2, py2, 9, 0, Math.PI * 2); x.fill(); x.restore(); }
+      /* tail sparks */
+      if (!reduce) for (let k = 0; k < 2; k++)
+        addSpark(px2, py2, -dx / dlen * (1 + Math.random()) + (Math.random() - .5) * .8, -dy / dlen * (1 + Math.random()) + (Math.random() - .5) * .8,
+          [255, 205, 130], { decay: .055, sz: 1.1, grav: .03, trail: 1.6 });
+      if (idx >= N) { if (r.wh) r.wh.stop(); explode(r, px2, py2); rockets.splice(ri, 1); }
+    }
+
+    /* strobe delayed pops */
+    for (let i = strobes.length - 1; i >= 0; i--) { const st = strobes[i]; if (now < st.at) continue;
+      strobes.splice(i, 1); flashes.push({ x: st.x, y: st.y, r: 6, life: .8, decay: .18 }); FX.crackle(.08);
+      for (let j = 0; j < 6; j++) { const a = Math.random() * Math.PI * 2, v = .6 + Math.random() * 1.6;
+        addSpark(st.x, st.y, Math.cos(a) * v, Math.sin(a) * v, [245, 248, 255], { decay: .05, sz: 1.2, grav: .03, trail: 1.4 }); } }
+
+    /* confetti — normal blend, flutters */
+    for (let i = confetti.length - 1; i >= 0; i--) { const f = confetti[i];
+      f.fl += .15; f.vx += Math.sin(f.fl) * .04; f.vx *= .985; f.vy = f.vy * .985 + .035; f.x += f.vx; f.y += f.vy; f.rot += f.vr; f.life -= f.decay;
+      if (f.life <= 0 || f.y > H + 10) { confetti.splice(i, 1); continue; }
+      const [cr, cg, cb] = f.col; x.save(); x.translate(f.x, f.y); x.rotate(f.rot);
+      x.globalAlpha = Math.min(1, f.life * 1.4); x.fillStyle = `rgb(${cr},${cg},${cb})`; x.fillRect(-f.w / 2, -f.h / 2, f.w, f.h); x.restore(); }
+
+    /* tacos — they bounce */
+    const ground = H - 38;
+    for (let i = tacos.length - 1; i >= 0; i--) { const t = tacos[i];
+      t.vy += .14; t.x += t.vx; t.y += t.vy; t.rot += t.vr;
+      if (t.y > ground) { t.y = ground; t.vy *= -.45; t.vx *= .7; t.vr *= .6; if (Math.abs(t.vy) < .5) { t.vy = 0; t.rest++; } }
+      if (t.rest > 90) t.life -= .02;
+      if (t.life <= 0) { tacos.splice(i, 1); continue; }
+      x.save(); x.translate(t.x, t.y); x.rotate(t.rot); x.globalAlpha = Math.min(1, t.life * 1.6);
+      x.font = "22px serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("🌮", 0, 0); x.restore(); }
+
+    /* light pass */
+    x.globalCompositeOperation = "lighter";
+    for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i]; f.life -= f.decay; f.r *= 1.13;
+      if (f.life <= 0) { flashes.splice(i, 1); continue; }
+      const g = x.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+      g.addColorStop(0, `rgba(255,250,235,${(f.life * .9).toFixed(3)})`); g.addColorStop(.5, `rgba(255,200,130,${(f.life * .35).toFixed(3)})`); g.addColorStop(1, "rgba(255,150,80,0)");
+      x.fillStyle = g; x.beginPath(); x.arc(f.x, f.y, f.r, 0, Math.PI * 2); x.fill(); }
+    for (let i = sparks.length - 1; i >= 0; i--) { const p = sparks[i];
+      p.vx *= p.drag; p.vy = p.vy * p.drag + p.grav; p.x += p.vx; p.y += p.vy;
+      p.life -= p.decay * (Math.random() < .14 ? 2.2 : 1);
+      if (p.life <= 0 || p.y > H + 10) { sparks.splice(i, 1); continue; }
+      const [cr, cg, cb] = p.col, a = Math.min(1, p.life * 1.2);
+      x.strokeStyle = `rgba(${cr},${cg},${cb},${a.toFixed(3)})`; x.lineWidth = p.sz * Math.max(.5, p.life); x.lineCap = "round";
+      x.beginPath(); x.moveTo(p.x - p.vx * p.trail, p.y - p.vy * p.trail); x.lineTo(p.x, p.y); x.stroke();
+      if (p.life > .6) { const hr = p.sz * 4, h = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, hr);
+        h.addColorStop(0, `rgba(${cr},${cg},${cb},${(a * .3).toFixed(3)})`); h.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+        x.fillStyle = h; x.beginPath(); x.arc(p.x, p.y, hr, 0, Math.PI * 2); x.fill(); } }
+    x.globalCompositeOperation = "source-over";
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+
+  /* dock + chrome wiring */
+  const dock = document.getElementById("dock");
+  dock.addEventListener("click", (e) => { const b = e.target.closest(".shell"); if (!b) return;
+    if (b.id === "btn-drones") { Drones.start(); return; }
+    if (b.id === "btn-finale") { runFinale(); return; }
+    if (!b.dataset.type) return;
+    type = b.dataset.type;
+    [...dock.querySelectorAll(".shell[data-type]")].forEach(s => s.setAttribute("aria-pressed", s === b ? "true" : "false")); });
+  const sbtn = document.getElementById("sound");
+  const setSnd = (on) => { sbtn.setAttribute("aria-pressed", String(on)); sbtn.textContent = on ? "sound on" : "sound off"; };
+  sbtn.addEventListener("click", async () => setSnd(await FX.toggle()));
+
+  /* share: your recorded sky, in a link */
+  document.getElementById("share").addEventListener("click", async () => {
+    const payload = encodeShow();
+    if (!payload) { toast("light something first — then share it"); return; }
+    let name = ""; try { name = (prompt("name your show (optional)") || "").trim().slice(0, 24); } catch (e) {}
+    const url = location.origin + location.pathname + "#v1" + payload + (name ? "." + encodeURIComponent(name) : "");
+    const text = name ? `🎆 “${name}” — a firework show I drew. Watch it, then remix it:` : "🎆 a firework show I drew. Watch it, then remix it:";
+    if (navigator.share) { try { await navigator.share({ title: "Fuse", text, url }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+    try { await navigator.clipboard.writeText(url); toast("link copied — your show plays for whoever opens it"); }
+    catch (e) { location.hash = "v1" + payload + (name ? "." + encodeURIComponent(name) : ""); toast("your show is in the address bar — copy it from there"); }
+  });
+
+  /* a show arrived in the link */
+  (() => { const h = location.hash;
+    if (!h || !h.startsWith("#v1")) return;
+    const dot = h.indexOf("."), payload = dot > 0 ? h.slice(3, dot) : h.slice(3);
+    const name = dot > 0 ? decodeURIComponent(h.slice(dot + 1)).replace(/[<>&"]/g, "") : "";
+    const items = decodeShow(payload); if (!items) return;
+    const ov = document.createElement("div"); ov.className = "arrive";
+    const ttl = document.createElement("div"); ttl.className = "ttl"; ttl.textContent = name || "someone left you a show";
+    const sb = document.createElement("div"); sb.className = "sb"; sb.textContent = "a firework show, drawn by hand · sound comes on when you light it";
+    const go = document.createElement("button"); go.className = "go"; go.type = "button"; go.textContent = "light it";
+    const af = document.createElement("div"); af.className = "after"; af.textContent = "then draw your own — and share it back";
+    ov.append(ttl, sb, go, af); document.body.appendChild(ov);
+    go.addEventListener("click", async () => {
+      if (!FX.isOn()) setSnd(await FX.toggle());
+      ov.remove(); document.body.classList.add("lit"); playShow(items); });
+  })();
+})();
+</script>
+</body>
+</html>

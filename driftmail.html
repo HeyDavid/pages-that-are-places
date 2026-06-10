@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driftmail — a beach where bottles wash in · Pages that are Places</title>
+<meta name="description" content="A night beach. Write one sentence, cork it in a bottle, and send it as a link — it washes ashore on whoever opens it. No accounts, no server: the message lives in the link itself.">
+<meta name="theme-color" content="#04060d">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  @view-transition { navigation: auto; }
+  :root{
+    --wall:#04060d;--cream:#ece9e0;--star:#e9edf6;--mist:#98a0b8;--faint:#6f79a0;
+    --cobalt:#6b78ff;--signal:#5b8def;--coral:#ff6a3d;--teal:#9fe1cb;--moon:#f3ecd8;
+    --serif:"Newsreader",Georgia,serif;--mono:"Space Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;overscroll-behavior:none}
+  body{background:#04060d;color:var(--cream);font-family:var(--mono);-webkit-font-smoothing:antialiased}
+  canvas{position:fixed;inset:0;width:100vw;height:100vh}
+  #sea{z-index:1}
+  ::selection{background:rgba(107,120,255,.32)}
+
+  .chrome{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;
+    gap:12px;padding:14px clamp(16px,4vw,30px);pointer-events:none}
+  .chrome>*{pointer-events:auto}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--mist);text-decoration:none;font-size:11px;letter-spacing:.14em;text-transform:uppercase;transition:color .3s}
+  .brand:hover{color:var(--cream)}
+  .brand .arw{color:var(--coral)}
+  .pill{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;cursor:pointer;
+    background:rgba(10,14,26,.55);border:1px solid rgba(255,255,255,.08);border-radius:11px;color:var(--mist);
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    transition:color .3s,border-color .3s;text-decoration:none}
+  .pill:hover{color:var(--cream);border-color:rgba(107,120,255,.4)}
+  .pill[aria-pressed="true"]{color:var(--signal);border-color:rgba(91,141,239,.5)}
+
+  /* threshold — the doorway and the sound gate */
+  .threshold{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    background:#04060d;text-align:center;padding:24px;transition:opacity 1.1s ease}
+  .threshold.gone{opacity:0;pointer-events:none}
+  .threshold .hr{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--faint)}
+  .threshold h1{font-family:var(--serif);font-weight:400;font-size:clamp(40px,7vw,72px);letter-spacing:-.02em;margin:0;color:#f4f1e8;view-transition-name:piece-04}
+  .threshold p{margin:0;font-size:12px;color:var(--mist);letter-spacing:.06em;max-width:40ch;line-height:1.9}
+  .threshold .go{margin-top:14px;padding:14px 32px;font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+    color:#06080f;background:var(--moon);border:none;border-radius:12px;box-shadow:0 0 36px rgba(243,236,216,.25);transition:transform .25s,box-shadow .3s}
+  .threshold .go:hover{transform:translateY(-2px);box-shadow:0 0 48px rgba(243,236,216,.4)}
+  .threshold .quiet{background:none;border:none;cursor:pointer;color:var(--faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-decoration:underline;text-underline-offset:4px}
+  .threshold .quiet:hover{color:var(--mist)}
+
+  .hint{position:fixed;left:50%;bottom:clamp(86px,13vh,120px);transform:translateX(-50%);z-index:6;text-align:center;pointer-events:none;
+    font-size:11.5px;letter-spacing:.08em;color:var(--mist);transition:opacity .8s ease;max-width:44ch;line-height:2}
+  body.busy .hint{opacity:0}
+
+  .dock{position:fixed;left:50%;bottom:clamp(16px,3.4vh,30px);transform:translateX(-50%);z-index:10;display:flex;gap:9px}
+
+  /* panels: writing desk + the opened letter */
+  .panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) translateY(10px);z-index:30;width:min(480px,calc(100vw - 28px));
+    background:rgba(8,11,21,.92);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:26px 26px 22px;
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 30px 80px rgba(0,0,0,.6);
+    opacity:0;pointer-events:none;transition:opacity .45s ease,transform .45s cubic-bezier(.2,.7,.2,1)}
+  .panel.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+  .panel .pk{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--faint);margin:0 0 14px}
+  .panel textarea{width:100%;height:96px;resize:none;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;
+    color:var(--cream);font-family:var(--serif);font-style:italic;font-size:18px;line-height:1.6;padding:12px 14px;outline:none}
+  .panel textarea:focus{border-color:rgba(107,120,255,.45)}
+  .panel input{width:100%;margin-top:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;
+    color:var(--mist);font-family:var(--mono);font-size:12px;padding:10px 14px;outline:none}
+  .panel input:focus{border-color:rgba(107,120,255,.45)}
+  .panel .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .panel .cnt{font-size:10px;color:var(--faint)}
+  .panel .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{padding:11px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:10px;
+    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--mist);transition:color .25s,border-color .3s,background .3s}
+  .btn:hover{color:var(--cream);border-color:rgba(107,120,255,.5)}
+  .btn.primary{background:var(--moon);color:#06080f;border-color:transparent}
+  .btn.primary:hover{background:#fff;color:#06080f}
+
+  .letter .msg{font-family:var(--serif);font-style:italic;font-size:clamp(19px,2.6vw,23px);line-height:1.65;color:#f1eee4;margin:4px 0 0;text-wrap:pretty}
+  .letter .from{font-family:var(--serif);font-size:15px;color:var(--mist);margin-top:14px}
+  .letter .meta{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-top:18px}
+
+  #toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%) translateY(8px);z-index:60;padding:10px 16px;
+    background:rgba(9,12,22,.92);border:1px solid rgba(107,120,255,.4);border-radius:11px;font-size:11.5px;color:var(--star);
+    letter-spacing:.03em;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:86vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%)}
+
+  .ashore{position:fixed;left:50%;bottom:clamp(62px,10vh,92px);transform:translateX(-50%);z-index:9;display:none;
+    padding:10px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--teal);cursor:pointer;
+    background:rgba(8,12,22,.7);border:1px solid rgba(159,225,203,.35);border-radius:100px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    animation:ashoreglow 2.8s ease-in-out infinite}
+  .ashore.show{display:block}
+  @keyframes ashoreglow{0%,100%{box-shadow:0 0 0 rgba(159,225,203,0)}50%{box-shadow:0 0 22px rgba(159,225,203,.25)}}
+
+  @media (prefers-reduced-motion:reduce){
+    .ashore{animation:none}
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<canvas id="sea" aria-label="A night beach. Bottles wash in with the tide."></canvas>
+
+<div class="chrome">
+  <a class="brand" href="index.html"><span class="arw">←</span><span class="txt">the rooms</span></a>
+  <button class="pill" id="sound" type="button" aria-pressed="false">surf off</button>
+</div>
+
+<div class="threshold" id="threshold">
+  <div class="hr">№04 · the fourth hour</div>
+  <h1>Driftmail.</h1>
+  <p>a beach at the bottom of the museum. write one sentence, cork it, and the tide will carry it — the whole letter lives inside the link. nothing is stored anywhere else on earth.</p>
+  <button class="go" id="enter" type="button">step down to the water</button>
+  <button class="quiet" id="enterQuiet" type="button">enter quietly (no sound)</button>
+</div>
+
+<p class="hint" id="hint">the tide is steady tonight &nbsp;·&nbsp; write a letter, or just stand here a while</p>
+
+<div class="dock">
+  <button class="pill" id="write" type="button">✉ &nbsp;write a letter</button>
+</div>
+
+<button class="ashore" id="ashore" type="button">a bottle has washed ashore — open it</button>
+
+<div class="panel" id="deskP" role="dialog" aria-label="Write a letter" aria-modal="false">
+  <p class="pk">one sentence, into the sea</p>
+  <textarea id="msg" maxlength="200" placeholder="write the kind of sentence you'd want to find on a beach…" aria-label="Your message"></textarea>
+  <input id="from" maxlength="24" placeholder="from (optional)" aria-label="Your name, optional">
+  <div class="row">
+    <span class="cnt"><span id="cnt">0</span>/200</span>
+    <span class="actions">
+      <button class="btn" id="deskClose" type="button">not tonight</button>
+      <button class="btn primary" id="cork" type="button">cork it &amp; send</button>
+    </span>
+  </div>
+</div>
+
+<div class="panel letter" id="letterP" role="dialog" aria-label="A letter from a bottle" aria-modal="false">
+  <p class="pk">washed ashore</p>
+  <p class="msg" id="lMsg"></p>
+  <p class="from" id="lFrom"></p>
+  <p class="meta" id="lMeta"></p>
+  <div class="row">
+    <span></span>
+    <span class="actions">
+      <button class="btn" id="lTide" type="button">let the tide have it</button>
+      <button class="btn" id="lKeep" type="button">keep this letter</button>
+      <button class="btn primary" id="lReply" type="button">send one back</button>
+    </span>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DRIFTMAIL — №04 of Pages that are Places. The fourth hour.
+   A night beach. One sentence goes into a bottle; the bottle
+   goes into a link; the link washes ashore on whoever opens
+   it. Zero backend — the letter exists only in the URL.
+   Canvas2D waves + moonlight, generative surf in WebAudio.
+   ============================================================ */
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- letter codec (#b1<msg-b64u>.<name-b64u>) ---------- */
+const enc = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const dec = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); return new TextDecoder().decode(Uint8Array.from(atob(s), c => c.charCodeAt(0))); };
+const readHash = () => { const h = location.hash;
+  if (!h || !h.startsWith("#b1")) return null;
+  try { const body = h.slice(3), dot = body.indexOf(".");
+    const msg = dec(dot > 0 ? body.slice(0, dot) : body).slice(0, 220);
+    const from = dot > 0 ? dec(body.slice(dot + 1)).slice(0, 24) : "";
+    return msg.trim() ? { msg, from } : null; } catch (e) { return null; } };
+
+/* ---------- moon phase (synodic approximation, Meeus-derived epoch) ---------- */
+const SYNODIC = 29.53058867;
+const moonPhase = () => { const epoch = Date.UTC(2000, 0, 6, 18, 14);
+  let d = ((Date.now() - epoch) / 86400000) % SYNODIC; if (d < 0) d += SYNODIC;
+  return d / SYNODIC; };
+
+/* ---------- surf (generative, opt-in — the threshold tap is the gesture) ---------- */
+const Surf = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx, master, on = false, built = false;
+  const channel = (lfoHz, fMin, fMax, pan) => {
+    const buf = ctx.createBuffer(1, 2 * ctx.sampleRate, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = .8; f.frequency.value = (fMin + fMax) / 2;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = lfoHz;
+    const lg = ctx.createGain(); lg.gain.value = (fMax - fMin) / 2;
+    lfo.connect(lg); lg.connect(f.frequency);
+    const sw = ctx.createGain(); sw.gain.value = .5;
+    const swLfo = ctx.createOscillator(); swLfo.frequency.value = .08 + Math.random() * .02;
+    const swG = ctx.createGain(); swG.gain.value = .22;
+    swLfo.connect(swG); swG.connect(sw.gain);
+    const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (p) p.pan.value = pan;
+    src.connect(f); f.connect(sw); if (p) { sw.connect(p); p.connect(master); } else sw.connect(master);
+    lfo.start(); swLfo.start(); src.start();
+  };
+  const build = () => { if (built) return; built = true;
+    ctx = new AC(); master = ctx.createGain(); master.gain.value = 0;
+    const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
+    channel(.11, 300, 800, -.5); channel(.09, 350, 750, .5); };
+  const setOn = async (v) => { if (v && !built) build();
+    if (built && ctx.state === "suspended") await ctx.resume();
+    on = v; if (built) master.gain.setTargetAtTime(v ? .14 : .0001, ctx.currentTime, 1.2); return on; };
+  const pop = () => { if (!on || !built) return; const t = ctx.currentTime;     /* the cork */
+    const o = ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(180, t + .12);
+    const g = ctx.createGain(); g.gain.setValueAtTime(.25, t); g.gain.exponentialRampToValueAtTime(.001, t + .16);
+    o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + .2); };
+  return { setOn, isOn: () => on, pop };
+})();
+
+/* ---------- the beach ---------- */
+(() => {
+  const skyC = document.getElementById("sky"), skyX = skyC.getContext("2d");
+  const c = document.getElementById("sea"), x = c.getContext("2d");
+  let W = 0, H = 0, dpr = 1, t = 0;
+  const HOR = () => H * .56, SAND = () => H * .84;
+  let foam = [];
+
+  const paintSky = () => {
+    skyC.width = W * dpr; skyC.height = H * dpr; skyX.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const g = skyX.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#03040b"); g.addColorStop(.45, "#071026"); g.addColorStop(.56, "#0a1830"); g.addColorStop(1, "#0a1426");
+    skyX.fillStyle = g; skyX.fillRect(0, 0, W, H);
+    let s = 4 | 0; s = 20260704;
+    const rnd = () => { s |= 0; s = (s + 0x6D2B79F5) | 0; let q = Math.imul(s ^ (s >>> 15), 1 | s); q = (q + Math.imul(q ^ (q >>> 7), 61 | q)) ^ q; return ((q ^ (q >>> 14)) >>> 0) / 4294967296; };
+    for (let i = 0; i < 150; i++) { const px = rnd() * W, py = Math.pow(rnd(), 1.5) * HOR() * .96, r = .3 + Math.pow(rnd(), 4) * 1.5;
+      skyX.fillStyle = `rgba(233,237,246,${(.12 + rnd() * .5).toFixed(2)})`; skyX.beginPath(); skyX.arc(px, py, r, 0, Math.PI * 2); skyX.fill(); }
+  };
+  const resize = () => { dpr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+    c.width = W * dpr; c.height = H * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    foam = []; const n = Math.min(120, Math.max(60, (W / 12) | 0));
+    for (let i = 0; i < n; i++) foam.push({ x: Math.random() * W, y: 0, r: 1 + Math.random() * 3, a: Math.random() * .3, dk: .003 + Math.random() * .004, ph: Math.random() * Math.PI * 2 });
+    paintSky(); };
+
+  const moonP = moonPhase(), MOONR = () => Math.min(46, Math.max(30, W * .032));
+  const moonXY = () => ({ mx: W * .72, my: H * .18 });
+  const drawMoon = () => { const { mx, my } = moonXY(), R = MOONR(), p = moonP;
+    const halo = x.createRadialGradient(mx, my, R * .6, mx, my, R * 3.2);
+    halo.addColorStop(0, "rgba(243,236,216,.16)"); halo.addColorStop(1, "rgba(243,236,216,0)");
+    x.fillStyle = halo; x.beginPath(); x.arc(mx, my, R * 3.2, 0, Math.PI * 2); x.fill();
+    x.save(); x.beginPath(); x.arc(mx, my, R, 0, Math.PI * 2); x.clip();
+    x.fillStyle = "#1a2236"; x.fillRect(mx - R, my - R, R * 2, R * 2);                 /* dark disc */
+    const wax = p < .5, k = Math.cos(2 * Math.PI * p);                                  /* terminator */
+    x.fillStyle = "var(--moon)"; x.fillStyle = "#f3ecd8";
+    x.beginPath(); x.arc(mx, my, R, -Math.PI / 2, Math.PI / 2, !wax); x.closePath(); x.fill();   /* lit semicircle */
+    x.beginPath(); x.ellipse(mx, my, Math.abs(k) * R, R, 0, 0, Math.PI * 2);
+    x.fillStyle = (wax ? p < .25 : p >= .75) ? "#1a2236" : "#f3ecd8"; x.fill();
+    x.restore();
+    x.strokeStyle = "rgba(243,236,216,.25)"; x.lineWidth = 1; x.beginPath(); x.arc(mx, my, R, 0, Math.PI * 2); x.stroke(); };
+  const drawMoonPath = () => { const { mx } = moonXY(), top = HOR() + 6, bot = SAND();
+    const br = (.5 + .5 * Math.sin(t * .1)) * .05 + .13;                                /* breathing */
+    for (let i = 0; i < 2; i++) { const wob = Math.sin(t * .1 + (i ? Math.PI / 4 : 0));
+      const w0 = (i ? 18 : 34) * (1 + wob * .05), a = i ? .09 : br;
+      const g = x.createLinearGradient(0, top, 0, bot);
+      g.addColorStop(0, `rgba(243,236,216,${(a * .9).toFixed(3)})`); g.addColorStop(1, `rgba(243,236,216,${(a * .25).toFixed(3)})`);
+      x.fillStyle = g; x.beginPath();
+      x.moveTo(mx - w0 * .45, top);
+      x.lineTo(mx + w0 * .45, top);
+      x.lineTo(mx + w0 * 2.4 + Math.sin(t * .3 + i) * 6, bot);
+      x.lineTo(mx - w0 * 2.4 + Math.sin(t * .27 + i) * 6, bot);
+      x.closePath(); x.fill(); } };
+
+  const band = (yBase, amp, speed, freq, fill, stroke) => {
+    x.beginPath(); x.moveTo(-20, H);
+    for (let px = -20; px <= W + 20; px += 10) {
+      const y = yBase + Math.sin(px * freq + t * speed) * amp + Math.sin(px * freq * 2.7 - t * speed * .6) * amp * .4;
+      x.lineTo(px, y); }
+    x.lineTo(W + 20, H); x.closePath(); x.fillStyle = fill; x.fill();
+    if (stroke) { x.strokeStyle = stroke; x.lineWidth = 1.2; x.stroke(); } };
+
+  /* ---------- the bottle ---------- */
+  /* states: none | out (leaving) | in (arriving) | beached | opened */
+  const bottle = { state: "none", x: 0, y: 0, rot: 0, s: 1, t: 0, glow: 0 };
+  const incoming = readHash();
+  const drawBottle = (bx, by, rot, s, glow) => {
+    x.save(); x.translate(bx, by); x.rotate(rot); x.scale(s, s);
+    if (glow > 0) { const g = x.createRadialGradient(0, 0, 0, 0, 0, 46);
+      g.addColorStop(0, `rgba(159,225,203,${(glow * .35).toFixed(3)})`); g.addColorStop(1, "rgba(159,225,203,0)");
+      x.fillStyle = g; x.beginPath(); x.arc(0, 0, 46, 0, Math.PI * 2); x.fill(); }
+    x.rotate(Math.PI / 2 * .85);
+    x.fillStyle = "rgba(140,190,170,.30)"; x.strokeStyle = "rgba(190,230,215,.55)"; x.lineWidth = 1.3;
+    x.beginPath();                                                /* body + shoulder + neck */
+    x.moveTo(-9, 18); x.lineTo(-9, -6); x.quadraticCurveTo(-9, -12, -4, -14); x.lineTo(-4, -22);
+    x.lineTo(4, -22); x.lineTo(4, -14); x.quadraticCurveTo(9, -12, 9, -6); x.lineTo(9, 18);
+    x.quadraticCurveTo(9, 22, 0, 22); x.quadraticCurveTo(-9, 22, -9, 18); x.closePath();
+    x.fill(); x.stroke();
+    x.fillStyle = "rgba(214,170,120,.95)"; x.fillRect(-4.5, -27, 9, 6);                /* cork */
+    x.fillStyle = "rgba(240,234,214,.85)";                                              /* the rolled letter */
+    x.save(); x.rotate(.18); x.fillRect(-5, -4, 10, 14); x.restore();
+    x.strokeStyle = "rgba(255,255,255,.5)"; x.lineWidth = 1;                            /* glass highlight */
+    x.beginPath(); x.moveTo(-5.5, -10); x.quadraticCurveTo(-7, 2, -5.5, 14); x.stroke();
+    x.restore(); };
+
+  const beachX = () => W * (.3 + Math.random() * .3);
+  const stepBottle = () => {
+    if (bottle.state === "none" || bottle.state === "opened") return;
+    const { mx } = moonXY(), horY = HOR() + 10;
+    if (bottle.state === "in") { bottle.t += reduce ? .05 : .0024;
+      const e = Math.min(1, bottle.t), ee = e * e * (3 - 2 * e);
+      bottle.x = mx + (bottle.tx - mx) * ee;
+      bottle.y = horY + (SAND() - 8 - horY) * ee + Math.sin(t * 1.6) * (1 - e) * 5;
+      bottle.rot = Math.sin(t * 1.3) * .3 * (1 - e * .6); bottle.s = .35 + .65 * ee;
+      if (e >= 1) { bottle.state = "beached"; document.getElementById("ashore").classList.add("show"); } }
+    else if (bottle.state === "beached") { bottle.glow = .5 + .5 * Math.sin(t * 1.8);
+      bottle.rot = Math.sin(t * .7) * .06; bottle.y = SAND() - 8 + Math.sin(t * .9) * 1.5; }
+    else if (bottle.state === "out") { bottle.t += reduce ? .05 : .003;
+      const e = Math.min(1, bottle.t), ee = e * e;
+      bottle.x = bottle.sx + (mx - bottle.sx) * ee;
+      bottle.y = (SAND() - 8) + (horY - (SAND() - 8)) * ee + Math.sin(t * 1.8) * (1 - e) * 6;
+      bottle.rot = Math.sin(t * 1.5) * .25; bottle.s = 1 - .65 * ee;
+      if (e >= 1) bottle.state = "none"; }
+    drawBottle(bottle.x, bottle.y, bottle.rot, bottle.s, bottle.glow || 0); };
+
+  const step = () => {
+    t += reduce ? 0 : .016;
+    x.clearRect(0, 0, W, H);
+    drawMoon();
+    /* sea body */
+    const sg = x.createLinearGradient(0, HOR(), 0, SAND());
+    sg.addColorStop(0, "rgba(10,24,46,.95)"); sg.addColorStop(1, "rgba(6,16,32,.95)");
+    x.fillStyle = sg; x.fillRect(0, HOR(), W, SAND() - HOR());
+    drawMoonPath();
+    /* the three researched wave bands rolling onto the sand */
+    band(SAND() - 46, Math.min(22, H * .02) + 8, .5, .006, "rgba(8,20,40,.9)");
+    band(SAND() - 24, 9, .8, .009, "rgba(14,32,56,.85)");
+    band(SAND() - 8 + Math.sin(t * .5) * 5, 5, 1.15, .013, "rgba(20,40,66,.8)", "rgba(205,230,240,.22)");
+    /* sand */
+    const dg = x.createLinearGradient(0, SAND(), 0, H);
+    dg.addColorStop(0, "rgba(28,26,30,.96)"); dg.addColorStop(1, "rgba(12,11,14,.98)");
+    x.fillStyle = dg; x.fillRect(0, SAND() - 2, W, H - SAND() + 2);
+    /* foam motes on the surf line */
+    const surfY = SAND() - 6;
+    for (const f of foam) { f.a -= f.dk;
+      if (f.a <= 0) { f.x = Math.random() * W; f.a = .12 + Math.random() * .2; f.ph = Math.random() * Math.PI * 2; }
+      const fy = surfY + Math.sin(f.x * .013 + t * 1.15) * 5 + Math.sin(f.ph) * 3;
+      x.fillStyle = `rgba(215,235,242,${f.a.toFixed(3)})`; x.beginPath(); x.arc(f.x, fy, f.r, 0, Math.PI * 2); x.fill(); }
+    stepBottle();
+    requestAnimationFrame(step); };
+
+  resize(); addEventListener("resize", resize, { passive: true });
+  requestAnimationFrame(step);
+
+  /* ---------- threshold ---------- */
+  const th = document.getElementById("threshold");
+  const enter = async (sound) => { th.classList.add("gone");
+    if (sound) { await Surf.setOn(true); setSnd(true); }
+    if (incoming && bottle.state === "none") setTimeout(() => {                       /* the tide delivers */
+      bottle.state = "in"; bottle.t = 0; bottle.tx = beachX(); }, reduce ? 200 : 1800); };
+  document.getElementById("enter").addEventListener("click", () => enter(true));
+  document.getElementById("enterQuiet").addEventListener("click", () => enter(false));
+
+  const sbtn = document.getElementById("sound");
+  const setSnd = (on) => { sbtn.setAttribute("aria-pressed", String(on)); sbtn.textContent = on ? "surf on" : "surf off"; };
+  sbtn.addEventListener("click", async () => setSnd(await Surf.setOn(!Surf.isOn())));
+
+  /* ---------- toast ---------- */
+  const toast = (m) => { let el = document.getElementById("toast");
+    if (!el) { el = document.createElement("div"); el.id = "toast"; document.body.appendChild(el); }
+    el.textContent = m; el.classList.add("show"); clearTimeout(toast._h); toast._h = setTimeout(() => el.classList.remove("show"), 3000); };
+
+  /* ---------- writing desk ---------- */
+  const deskP = document.getElementById("deskP"), msgEl = document.getElementById("msg"), fromEl = document.getElementById("from");
+  const openDesk = () => { deskP.classList.add("open"); document.body.classList.add("busy"); setTimeout(() => msgEl.focus(), 120); };
+  const closeDesk = () => { deskP.classList.remove("open"); document.body.classList.remove("busy"); };
+  document.getElementById("write").addEventListener("click", openDesk);
+  document.getElementById("deskClose").addEventListener("click", closeDesk);
+  msgEl.addEventListener("input", () => document.getElementById("cnt").textContent = msgEl.value.length);
+  document.getElementById("cork").addEventListener("click", async () => {
+    const m = msgEl.value.trim(); if (!m) { toast("the bottle needs a sentence first"); return; }
+    const name = fromEl.value.trim();
+    const url = location.origin + location.pathname + "#b1" + enc(m) + (name ? "." + enc(name) : "");
+    closeDesk(); Surf.pop();
+    bottle.state = "out"; bottle.t = 0; bottle.sx = W * .5; bottle.x = W * .5; bottle.y = SAND() - 8; bottle.s = 1; bottle.glow = 0;
+    const text = "🌊 a letter in a bottle, for you — open it on the beach:";
+    if (navigator.share) { try { await navigator.share({ title: "Driftmail", text, url }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+    try { await navigator.clipboard.writeText(url); toast("link copied — the tide will deliver it to whoever opens it"); }
+    catch (e) { location.hash = url.split("#")[1]; toast("your letter is in the address bar — copy it from there"); } });
+
+  /* ---------- the opened letter ---------- */
+  const letterP = document.getElementById("letterP"), ashore = document.getElementById("ashore");
+  const serial = () => Date.now().toString(16).slice(-6);
+  const todayLine = () => new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const uncork = () => { if (bottle.state !== "beached" || !incoming) return;
+    bottle.state = "opened"; ashore.classList.remove("show"); Surf.pop();
+    document.getElementById("lMsg").textContent = "“" + incoming.msg + "”";
+    document.getElementById("lFrom").textContent = incoming.from ? "— " + incoming.from : "— unsigned";
+    document.getElementById("lMeta").textContent = "washed ashore " + todayLine();
+    letterP.classList.add("open"); document.body.classList.add("busy"); };
+  ashore.addEventListener("click", uncork);
+  c.addEventListener("click", (e) => { if (bottle.state !== "beached") return;
+    if (Math.hypot(e.clientX - bottle.x, e.clientY - bottle.y) < 60) uncork(); });
+  document.getElementById("lTide").addEventListener("click", () => { letterP.classList.remove("open"); document.body.classList.remove("busy"); });
+  document.getElementById("lReply").addEventListener("click", () => { letterP.classList.remove("open"); openDesk(); });
+
+  /* keepsake: the letter as a small poster (2× retina, letterboxed, serial — per design plan) */
+  document.getElementById("lKeep").addEventListener("click", () => { if (!incoming) return;
+    const pc = document.createElement("canvas"); pc.width = 1400; pc.height = 1000; const p = pc.getContext("2d");
+    p.fillStyle = "#06080f"; p.fillRect(0, 0, 1400, 1000);
+    p.strokeStyle = "rgba(236,233,224,.35)"; p.lineWidth = 2; p.strokeRect(46, 46, 1308, 908);
+    const mp = moonPhase(), R = 54, mx2 = 1400 - 160, my2 = 170;                       /* little moon, correct phase */
+    p.save(); p.beginPath(); p.arc(mx2, my2, R, 0, Math.PI * 2); p.clip();
+    p.fillStyle = "#1a2236"; p.fillRect(mx2 - R, my2 - R, R * 2, R * 2);
+    const wax = mp < .5, k = Math.cos(2 * Math.PI * mp);
+    p.fillStyle = "#f3ecd8"; p.beginPath(); p.arc(mx2, my2, R, -Math.PI / 2, Math.PI / 2, !wax); p.closePath(); p.fill();
+    p.beginPath(); p.ellipse(mx2, my2, Math.abs(k) * R, R, 0, 0, Math.PI * 2);
+    p.fillStyle = (wax ? mp < .25 : mp >= .75) ? "#1a2236" : "#f3ecd8"; p.fill(); p.restore();
+    p.fillStyle = "#f1eee4"; p.font = "italic 54px Newsreader, Georgia, serif"; p.textAlign = "left";
+    const words = incoming.msg.split(" "), lines = []; let line = "";                   /* wrap */
+    for (const w of words) { if (p.measureText(line + " " + w).width > 1060) { lines.push(line.trim()); line = w; } else line += " " + w; }
+    lines.push(line.trim());
+    const y0 = 500 - lines.length * 38;
+    lines.forEach((l, i) => p.fillText("“".repeat(i === 0 ? 1 : 0) + l + (i === lines.length - 1 ? "”" : ""), 140, y0 + i * 76));
+    p.fillStyle = "rgba(152,160,184,1)"; p.font = "34px Newsreader, Georgia, serif";
+    p.fillText(incoming.from ? "— " + incoming.from : "— unsigned", 140, y0 + lines.length * 76 + 40);
+    p.fillStyle = "rgba(111,121,160,.9)"; p.font = "22px 'Space Mono', monospace";
+    p.fillText("DRIFTMAIL · washed ashore " + todayLine().toUpperCase() + " · Nº " + serial().toUpperCase(), 140, 920);
+    p.textAlign = "right"; p.fillText("PAGES THAT ARE PLACES", 1260, 920);
+    pc.toBlob((b) => { const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+      a.download = "driftmail-" + serial() + ".png"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, "image/png");
+    toast("kept — check your downloads"); });
+
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeDesk(); letterP.classList.remove("open"); document.body.classList.remove("busy"); } });
+})();
+</script>
+</body>
+</html>
