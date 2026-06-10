@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="440" viewBox="0 0 1280 440" role="img" aria-label="Ember — lines of a poem hover over a low fire; some lines glow gold, others have cooled to ash">
+<defs>
+<linearGradient id="eroom" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e0a07"/><stop offset=".7" stop-color="#15100b"/><stop offset="1" stop-color="#1c1410"/></linearGradient>
+<radialGradient id="eglow" cx="50%" cy="100%" r="80%"><stop offset="0" stop-color="#cf5a28" stop-opacity=".5"/><stop offset=".45" stop-color="#cf5a28" stop-opacity=".15"/><stop offset="1" stop-color="#cf5a28" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1280" height="440" fill="url(#eroom)"/>
+<rect width="1280" height="440" fill="url(#eglow)"/>
+<!-- the poem: warm lines glow, skipped lines are ash -->
+<g font-family="Georgia, serif" font-style="italic" text-anchor="middle">
+<text x="640" y="86" font-size="21" fill="#4a4038">Come closer. The night is long and I am patient.</text>
+<text x="640" y="148" font-size="23" fill="#ffce8a" opacity=".95">What you look at longest becomes a little bit yours.</text>
+<text x="640" y="146" font-size="23" fill="#ff9a5c" opacity=".25">What you look at longest becomes a little bit yours.</text>
+<text x="640" y="210" font-size="21" fill="#5a4c40">The wood does not regret. It becomes light, and leaves.</text>
+<text x="640" y="272" font-size="22" fill="#cf8a5a">Some words are coals: dull until breathed on.</text>
+<text x="640" y="334" font-size="21" fill="#4a4038">When you go, take an ember. It will not burn you.</text>
+</g>
+<!-- rising embers -->
+<g fill="#ffaa64">
+<circle cx="180" cy="360" r="2.4" opacity=".85"/><circle cx="210" cy="300" r="1.6" opacity=".6"/><circle cx="166" cy="240" r="1.2" opacity=".4"/>
+<circle cx="1080" cy="380" r="2.6" opacity=".9"/><circle cx="1110" cy="312" r="1.7" opacity=".6"/><circle cx="1064" cy="252" r="1.1" opacity=".35"/>
+<circle cx="900" cy="396" r="2" opacity=".7"/><circle cx="372" cy="392" r="2.2" opacity=".75"/><circle cx="640" cy="408" r="2.8" opacity=".9"/>
+</g>
+<!-- hearth line -->
+<path d="M0 432 Q 320 420 640 428 T 1280 424 L 1280 440 L 0 440 Z" fill="#0a0705"/>
+<text x="640" y="400" font-family="Space Mono, monospace" font-size="14" fill="#6f6052" text-anchor="middle" letter-spacing="2">it brightens where you linger</text>
+</svg>
